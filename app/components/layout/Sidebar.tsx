@@ -17,7 +17,6 @@ import {
   X
 } from 'lucide-react'
 
-// Definição das props para controlar o menu mobile
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
@@ -28,15 +27,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  // Função de Logout migrada
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
-  // Função auxiliar para classes de link ativo
   const getLinkClass = (path: string) => {
-    const isActive = pathname === path
+    // Verifica se a rota atual começa com o path do link (para sub-rotas) ou é exata
+    const isActive = pathname === path || pathname?.startsWith(`${path}/`)
     return `flex items-center px-3 py-2 rounded transition-colors duration-200 ${
       isActive
         ? 'bg-[#C0A040] text-black font-bold'
@@ -46,44 +44,40 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay para Mobile (fundo escuro quando o menu abre) */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 top-0 bg-black/50 z-30 md:hidden glass-effect"
-          onClick={onClose}
-        />
-      )}
+      {/* Overlay para Mobile */}
+      <div 
+        className={`fixed inset-0 z-30 bg-black/50 md:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      />
 
       <aside
         className={`
-          fixed left-0 top-20 md:top-0 bottom-0 w-[260px] z-40 bg-[#000000] border-r border-[#333333] flex flex-col transition-transform duration-300 shadow-2xl md:shadow-none
-          md:translate-x-0 md:static md:h-screen
+          fixed left-0 top-0 bottom-0 z-40 w-[260px] bg-[#000000] border-r border-[#333333] flex flex-col transition-transform duration-300 shadow-2xl md:shadow-none
+          md:static md:translate-x-0 
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         {/* Cabeçalho da Sidebar (Logo) */}
-        <div className="hidden md:flex flex-col justify-between items-center mb-6 pt-5 px-5">
-          <div className="text-center w-full relative">
-            {/* Botão fechar (apenas mobile, caso necessário ajuste de layout) */}
-            <button onClick={onClose} className="md:hidden absolute right-0 top-0 text-[#AAAAAA]">
-               <X size={20} />
+        <div className="flex flex-col justify-between items-center mb-6 pt-5 px-5 relative">
+            {/* Botão fechar (apenas mobile) */}
+            <button onClick={onClose} className="md:hidden absolute right-4 top-6 text-[#AAAAAA] hover:text-white">
+               <X size={24} />
             </button>
             
-            {/* Logo do SGD */}
             <img
               src="/logo_sgd.webp"
               alt="Logo SGD"
               className="w-20 h-20 rounded-xl object-cover mx-auto mb-3 border-2 border-[#333333]"
             />
-            <h2 className="text-[#C0A040] text-lg font-bold tracking-wider">SGD IFPB</h2>
-          </div>
+            <h2 className="text-[#C0A040] text-lg font-bold tracking-wider text-center">SGD IFPB</h2>
         </div>
 
         {/* Navegação */}
         <nav className="flex-1 overflow-y-auto custom-scrollbar px-5 py-4 md:py-0">
           <ul className="space-y-1 text-sm">
             
-            {/* Seção PRINCIPAL */}
             <li className="px-3 text-[#AAAAAA] uppercase tracking-widest text-[0.65rem] font-bold mt-2 md:mt-4 mb-2">
               Principal
             </li>
@@ -100,7 +94,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             </li>
 
-            {/* Seção PROCESSOS */}
             <li className="px-3 text-[#AAAAAA] uppercase tracking-widest text-[0.65rem] font-bold mt-6 mb-2">
               Processos
             </li>
@@ -117,7 +110,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             </li>
 
-            {/* Seção CADASTROS */}
             <li className="px-3 text-[#AAAAAA] uppercase tracking-widest text-[0.65rem] font-bold mt-6 mb-2">
               Cadastros
             </li>
@@ -134,7 +126,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             </li>
 
-            {/* Seção ADMINISTRAÇÃO */}
             <li className="px-3 text-[#AAAAAA] uppercase tracking-widest text-[0.65rem] font-bold mt-6 mb-2">
               Administração
             </li>
@@ -145,7 +136,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             </li>
 
-            {/* Seção SISTEMA */}
             <li className="px-3 text-[#AAAAAA] uppercase tracking-widest text-[0.65rem] font-bold mt-6 mb-2">
               Sistema
             </li>
@@ -162,7 +152,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             </li>
 
-            {/* Botão Sair */}
             <li className="mt-6 pt-4 border-t border-[#333333]">
               <button
                 onClick={handleLogout}
