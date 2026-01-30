@@ -39,3 +39,12 @@ export interface IDefesa {
   banca?: string[] // Array de nomes ou IDs
   status: 'Agendada' | 'Realizada' | 'Cancelada'
 }
+
+// Tipo para Agendamento
+export interface IAgendamento {
+  id: number
+  aluno: string
+  titulo: string
+  data: string
+  hora: string
+}
