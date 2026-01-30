@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { AlunoService, IAlunoCompleto } from '@/app/services/alunoService'
 import { AlunoForm } from '@/app/components/alunos/AlunoForm'
 import { DefesaDetails } from '@/app/components/alunos/DefesaDetails'
-import { Pagination } from '@/app/components/ui/Pagination' // Importação Atualizada
+import { Pagination } from '@/app/components/ui/Pagination'
+import { DataTable, Column } from '@/app/components/ui/DataTable'
 import { Plus, Search, Edit, Trash2, GraduationCap } from 'lucide-react'
 
 export default function AlunosPage() {
@@ -13,7 +14,7 @@ export default function AlunosPage() {
   const [busca, setBusca] = useState('')
 
   // Configuração da Paginação
-  const ITEMS_PER_PAGE = 8 // Mesmo valor do arquivo alunos.js original
+  const ITEMS_PER_PAGE = 8
   const [currentPage, setCurrentPage] = useState(1)
 
   // Estados dos Modais
@@ -74,6 +75,72 @@ export default function AlunosPage() {
     }
   }
 
+  // --- Helpers de Estilo ---
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'Ativo': return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+      case 'Qualificado': return 'text-[#C0A040] border-[#C0A040]/30 bg-[#C0A040]/10'
+      case 'Defendido': return 'text-green-400 border-green-400/30 bg-green-400/10'
+      default: return 'text-red-400 border-red-400/30 bg-red-400/10'
+    }
+  }
+
+  // --- Definição das Colunas ---
+  const columns: Column<IAlunoCompleto>[] = [
+    {
+      header: 'Aluno / Matrícula',
+      accessor: (aluno) => (
+        <div>
+          <div className="font-medium text-white">{aluno.nome}</div>
+          <div className="text-[#AAAAAA] text-xs font-mono">{aluno.matricula}</div>
+        </div>
+      )
+    },
+    {
+      header: 'Curso / Ingresso',
+      accessor: (aluno) => (
+        <div>
+          <div className="text-sm text-[#E0E0E0]">{aluno.curso}</div>
+          <div className="text-[#AAAAAA] text-xs">Ingresso: {aluno.ingresso}</div>
+        </div>
+      )
+    },
+    {
+      header: 'Orientador',
+      accessor: (aluno) => (
+        <span className="text-sm text-[#E0E0E0]">
+            {aluno.professores?.nome || <span className="text-[#666] italic">Sem orientador</span>}
+        </span>
+      )
+    },
+    {
+      header: 'Status',
+      className: 'text-center',
+      accessor: (aluno) => (
+        <span className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(aluno.status)}`}>
+            {aluno.status}
+        </span>
+      )
+    },
+    {
+      header: 'Ações',
+      className: 'text-right',
+      accessor: (aluno) => (
+        <div className="flex items-center justify-end space-x-3">
+            <button onClick={() => setViewAluno(aluno)} className="text-[#AAAAAA] hover:text-blue-400 transition" title="Ver Detalhes">
+                <GraduationCap className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleEdit(aluno)} className="text-[#AAAAAA] hover:text-[#C0A040] transition" title="Editar">
+                <Edit className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleDelete(aluno.id)} className="text-[#AAAAAA] hover:text-red-500 transition" title="Excluir">
+                <Trash2 className="w-5 h-5" />
+            </button>
+        </div>
+      )
+    }
+  ]
+
   // Filtragem
   const dadosFiltrados = alunos.filter(aluno => 
     aluno.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -85,15 +152,6 @@ export default function AlunosPage() {
   const totalPages = Math.ceil(dadosFiltrados.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedData = dadosFiltrados.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'Ativo': return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
-      case 'Qualificado': return 'text-[#C0A040] border-[#C0A040]/30 bg-[#C0A040]/10'
-      case 'Defendido': return 'text-green-400 border-green-400/30 bg-green-400/10'
-      default: return 'text-red-400 border-red-400/30 bg-red-400/10'
-    }
-  }
 
   return (
     <div className="space-y-6 relative">
@@ -145,62 +203,13 @@ export default function AlunosPage() {
         </div>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela Componentizada */}
       <div className="bg-[#1F1F1F] rounded-lg border border-[#333333] flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full divide-y divide-[#333333]">
-            <thead className="bg-black">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Aluno / Matrícula</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Curso / Ingresso</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Orientador</th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">Status</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-[#C0A040]">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#333333] bg-[#1F1F1F]">
-              {loading ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-[#AAAAAA]">Carregando...</td></tr>
-              ) : dadosFiltrados.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-[#AAAAAA]">Nenhum aluno encontrado.</td></tr>
-              ) : (
-                paginatedData.map((aluno) => (
-                  <tr key={aluno.id} className="hover:bg-[#1A1A1A] transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-white">{aluno.nome}</div>
-                      <div className="text-[#AAAAAA] text-xs font-mono">{aluno.matricula}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-[#E0E0E0]">{aluno.curso}</div>
-                      <div className="text-[#AAAAAA] text-xs">Ingresso: {aluno.ingresso}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#E0E0E0]">
-                      {aluno.professores?.nome || <span className="text-[#666] italic">Sem orientador</span>}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`px-2 py-1 text-xs rounded-full border ${getStatusColor(aluno.status)}`}>
-                        {aluno.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-3">
-                        <button onClick={() => setViewAluno(aluno)} className="text-[#AAAAAA] hover:text-blue-400 transition" title="Ver Detalhes">
-                          <GraduationCap className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => handleEdit(aluno)} className="text-[#AAAAAA] hover:text-[#C0A040] transition" title="Editar">
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => handleDelete(aluno.id)} className="text-[#AAAAAA] hover:text-red-500 transition" title="Excluir">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable 
+            columns={columns}
+            data={paginatedData}
+            isLoading={loading}
+        />
 
         {/* Rodapé com Paginação */}
         {!loading && dadosFiltrados.length > 0 && (

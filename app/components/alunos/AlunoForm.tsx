@@ -5,6 +5,8 @@ import { AlunoService, IAlunoCompleto } from '@/app/services/alunoService'
 import { ProfessorService } from '@/app/services/professorService'
 import { IProfessor, IAluno, IDefesa } from '@/app/type/index'
 import { X, Save, AlertCircle, GraduationCap, User } from 'lucide-react'
+import { FormInput } from '../ui/FormInput'
+import { FormSelect } from '../ui/FormSelect'
 
 interface AlunoFormProps {
   alunoToEdit?: IAlunoCompleto | null
@@ -33,29 +35,25 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
     orientador_id: undefined
   })
 
-  // Estado da Defesa (Agora com Resumo)
+  // Estado da Defesa
   const [defesaData, setDefesaData] = useState<Partial<IDefesa>>({
     titulo: '',
     local: 'Auditório do IFPB',
     data: '',
     horario: '',
-    resumo: '', // Campo novo adicionado
+    resumo: '',
     status: 'Agendada',
     banca: [] 
   })
   
-  // Estado auxiliar para membros da banca (string separada por vírgula no input)
   const [bancaInput, setBancaInput] = useState('')
 
-  // Carregar dados iniciais
   useEffect(() => {
     async function loadData() {
       try {
-        // 1. Carrega Professores
         const profs = await ProfessorService.getAll()
-        setProfessores(profs.filter(p => p.ativo)) // Apenas ativos
+        setProfessores(profs.filter(p => p.ativo))
 
-        // 2. Se for edição, preenche os campos
         if (alunoToEdit) {
           setAlunoData({
             nome: alunoToEdit.nome,
@@ -70,17 +68,16 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
 
           if (alunoToEdit.defesas) {
             setDefesaData({
-                // @ts-ignore - Garantindo que leia os campos mesmo se o tipo variar
+                // @ts-ignore
                 titulo: alunoToEdit.defesas.titulo || '',
                 local: alunoToEdit.defesas.local || '',
                 data: alunoToEdit.defesas.data || '',
                 horario: alunoToEdit.defesas.horario || '',
-                resumo: alunoToEdit.defesas.resumo || '', // Carrega o resumo
+                resumo: alunoToEdit.defesas.resumo || '',
                 status: alunoToEdit.defesas.status || 'Agendada',
                 banca: alunoToEdit.defesas.banca || []
             })
             
-            // Converte array de banca para string editável
             if (alunoToEdit.defesas.banca && Array.isArray(alunoToEdit.defesas.banca)) {
                 setBancaInput(alunoToEdit.defesas.banca.join(', '))
             }
@@ -96,7 +93,6 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
     loadData()
   }, [alunoToEdit])
 
-  // Handlers de Input
   const handleAlunoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setAlunoData(prev => ({ ...prev, [name]: value }))
@@ -113,20 +109,16 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
     setError('')
 
     try {
-      // Validação Simples
       if (!alunoData.nome || !alunoData.matricula || !alunoData.orientador_id) {
         throw new Error('Preencha os campos obrigatórios do Aluno (Nome, Matrícula, Orientador).')
       }
 
-      // Prepara a banca (transforma string em array)
       const bancaArray = bancaInput.split(',').map(s => s.trim()).filter(s => s !== '')
       const defesaFinal = { ...defesaData, banca: bancaArray }
 
       if (alunoToEdit?.id) {
-        // Atualizar
         await AlunoService.update(alunoToEdit.id, alunoData, defesaFinal)
       } else {
-        // Criar
         await AlunoService.create(alunoData, defesaFinal)
       }
 
@@ -141,7 +133,7 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
 
   return (
     <div className="bg-[#1F1F1F] rounded-lg border border-[#333333] w-full max-w-4xl mx-auto shadow-2xl relative flex flex-col max-h-[90vh]">
-      {/* Header do Modal */}
+      {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-[#333333]">
         <h2 className="text-xl font-bold text-[#C0A040]">
             {alunoToEdit ? 'Editar Aluno & Defesa' : 'Novo Cadastro de Aluno'}
@@ -151,7 +143,7 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
         </button>
       </div>
 
-      {/* Tabs de Navegação */}
+      {/* Tabs */}
       <div className="flex border-b border-[#333333] bg-[#121212]">
         <button
             type="button"
@@ -173,7 +165,7 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
         </button>
       </div>
 
-      {/* Corpo do Formulário (Scrollável) */}
+      {/* Conteúdo */}
       <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
         {error && (
             <div className="bg-red-900/20 border border-red-500 text-red-200 p-3 rounded mb-6 flex items-center gap-2 text-sm">
@@ -184,128 +176,152 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
 
         <form id="aluno-form" onSubmit={handleSubmit}>
             {/* --- ABA 1: ALUNO --- */}
-            <div className={activeTab === 'aluno' ? 'block space-y-4' : 'hidden'}>
+            <div className={activeTab === 'aluno' ? 'block' : 'hidden'}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Nome Completo *</label>
-                        <input name="nome" value={alunoData.nome} onChange={handleAlunoChange} required className="input-dark" />
-                    </div>
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Matrícula *</label>
-                        <input name="matricula" value={alunoData.matricula} onChange={handleAlunoChange} required className="input-dark" />
-                    </div>
+                    <FormInput 
+                        label="Nome Completo" 
+                        name="nome" 
+                        value={alunoData.nome} 
+                        onChange={handleAlunoChange} 
+                        required 
+                    />
+                    <FormInput 
+                        label="Matrícula" 
+                        name="matricula" 
+                        value={alunoData.matricula} 
+                        onChange={handleAlunoChange} 
+                        required 
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">E-mail</label>
-                        <input name="email" type="email" value={alunoData.email} onChange={handleAlunoChange} required className="input-dark" />
-                    </div>
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Orientador *</label>
-                        <select 
-                            name="orientador_id" 
-                            value={alunoData.orientador_id || ''} 
-                            onChange={handleAlunoChange} 
-                            required 
-                            className="input-dark"
-                            disabled={loadingProfs}
-                        >
-                            <option value="">Selecione um Professor...</option>
-                            {professores.map(p => (
-                                <option key={p.id} value={p.id}>{p.nome}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <FormInput 
+                        label="E-mail" 
+                        name="email" 
+                        type="email" 
+                        value={alunoData.email} 
+                        onChange={handleAlunoChange} 
+                        required 
+                    />
+                    <FormSelect 
+                        label="Orientador"
+                        name="orientador_id"
+                        value={alunoData.orientador_id || ''}
+                        onChange={handleAlunoChange}
+                        required
+                        disabled={loadingProfs}
+                        options={professores.map(p => ({ value: p.id, label: p.nome }))}
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Curso</label>
-                        <select name="curso" value={alunoData.curso} onChange={handleAlunoChange} className="input-dark">
-                            <option value="Mestrado">Mestrado</option>
-                            <option value="Doutorado">Doutorado</option>
-                            <option value="Especialização">Especialização</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Ano Ingresso</label>
-                        <input name="ingresso" type="number" value={alunoData.ingresso} onChange={handleAlunoChange} className="input-dark" />
-                    </div>
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Status Atual</label>
-                        <select name="status" value={alunoData.status} onChange={handleAlunoChange} className="input-dark">
-                            <option value="Ativo">Ativo</option>
-                            <option value="Qualificado">Qualificado</option>
-                            <option value="Defendido">Defendido</option>
-                            <option value="Trancado">Trancado</option>
-                            <option value="Desligado">Desligado</option>
-                        </select>
-                    </div>
+                    <FormSelect 
+                        label="Curso"
+                        name="curso"
+                        value={alunoData.curso}
+                        onChange={handleAlunoChange}
+                        options={[
+                            { value: 'Mestrado', label: 'Mestrado' },
+                            { value: 'Doutorado', label: 'Doutorado' },
+                            { value: 'Especialização', label: 'Especialização' }
+                        ]}
+                    />
+                    <FormInput 
+                        label="Ano Ingresso" 
+                        name="ingresso" 
+                        type="number" 
+                        value={alunoData.ingresso} 
+                        onChange={handleAlunoChange} 
+                    />
+                    <FormSelect 
+                        label="Status Atual"
+                        name="status"
+                        value={alunoData.status}
+                        onChange={handleAlunoChange}
+                        options={[
+                            { value: 'Ativo', label: 'Ativo' },
+                            { value: 'Qualificado', label: 'Qualificado' },
+                            { value: 'Defendido', label: 'Defendido' },
+                            { value: 'Trancado', label: 'Trancado' },
+                            { value: 'Desligado', label: 'Desligado' }
+                        ]}
+                    />
                 </div>
             </div>
 
             {/* --- ABA 2: DEFESA --- */}
-            <div className={activeTab === 'defesa' ? 'block space-y-4' : 'hidden'}>
-                <div className="bg-[#121212] p-4 rounded border border-[#333333] mb-4">
+            <div className={activeTab === 'defesa' ? 'block' : 'hidden'}>
+                <div className="bg-[#121212] p-4 rounded border border-[#333333] mb-6">
                     <p className="text-sm text-[#AAAAAA]">Preencha apenas se a defesa já estiver prevista.</p>
                 </div>
 
-                <div>
-                    <label className="block text-sm text-[#AAAAAA] mb-1">Título da Dissertação/Tese</label>
-                    <input name="titulo" value={defesaData.titulo} onChange={handleDefesaChange} className="input-dark" placeholder="Título provisório ou final..." />
-                </div>
+                <FormInput 
+                    label="Título da Dissertação/Tese"
+                    name="titulo"
+                    value={defesaData.titulo}
+                    onChange={handleDefesaChange}
+                    placeholder="Título provisório ou final..."
+                />
                 
-                {/* --- CAMPO NOVO: RESUMO --- */}
-                <div>
-                    <label className="block text-sm text-[#AAAAAA] mb-1">Resumo / Abstract</label>
+                {/* Textarea customizado (ainda não temos FormTextarea, então estilizei igual aos inputs) */}
+                <div className="w-full mb-4">
+                    <label className="block text-sm font-medium text-[#AAAAAA] mb-1.5">Resumo / Abstract</label>
                     <textarea 
                         name="resumo" 
                         value={defesaData.resumo || ''} 
                         onChange={handleDefesaChange} 
-                        className="input-dark min-h-[100px]" 
+                        className="w-full px-4 py-2.5 bg-[#1F1F1F] border border-[#333333] rounded-lg text-[#E0E0E0] placeholder-[#555555] focus:outline-none focus:ring-1 focus:ring-[#C0A040] focus:border-[#C0A040] transition-all duration-200 min-h-[100px]"
                         placeholder="Breve resumo do trabalho..." 
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Data</label>
-                        <input name="data" type="date" value={defesaData.data} onChange={handleDefesaChange} className="input-dark" />
-                    </div>
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Horário</label>
-                        <input name="horario" type="time" value={defesaData.horario} onChange={handleDefesaChange} className="input-dark" />
-                    </div>
-                    <div>
-                        <label className="block text-sm text-[#AAAAAA] mb-1">Status da Defesa</label>
-                        <select name="status" value={defesaData.status} onChange={handleDefesaChange} className="input-dark">
-                            <option value="Agendada">Agendada</option>
-                            <option value="Realizada">Realizada</option>
-                            <option value="Cancelada">Cancelada</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm text-[#AAAAAA] mb-1">Local</label>
-                    <input name="local" value={defesaData.local} onChange={handleDefesaChange} className="input-dark" />
-                </div>
-
-                <div>
-                    <label className="block text-sm text-[#AAAAAA] mb-1">Banca Examinadora (Separe nomes por vírgula)</label>
-                    <input 
-                        value={bancaInput} 
-                        onChange={(e) => setBancaInput(e.target.value)} 
-                        className="input-dark" 
-                        placeholder="Ex: Prof. Dr. João, Prof. Dra. Maria..." 
+                    <FormInput 
+                        label="Data" 
+                        name="data" 
+                        type="date" 
+                        value={defesaData.data} 
+                        onChange={handleDefesaChange} 
+                    />
+                    <FormInput 
+                        label="Horário" 
+                        name="horario" 
+                        type="time" 
+                        value={defesaData.horario} 
+                        onChange={handleDefesaChange} 
+                    />
+                    <FormSelect 
+                        label="Status da Defesa"
+                        name="status"
+                        value={defesaData.status}
+                        onChange={handleDefesaChange}
+                        options={[
+                            { value: 'Agendada', label: 'Agendada' },
+                            { value: 'Realizada', label: 'Realizada' },
+                            { value: 'Cancelada', label: 'Cancelada' }
+                        ]}
                     />
                 </div>
+
+                <FormInput 
+                    label="Local" 
+                    name="local" 
+                    value={defesaData.local} 
+                    onChange={handleDefesaChange} 
+                />
+
+                <FormInput 
+                    label="Banca Examinadora" 
+                    value={bancaInput} 
+                    onChange={(e) => setBancaInput(e.target.value)} 
+                    placeholder="Ex: Prof. Dr. João, Prof. Dra. Maria (separe por vírgula)"
+                    helperText="Separe os nomes dos membros por vírgula"
+                />
             </div>
         </form>
       </div>
 
-      {/* Footer com Botões */}
+      {/* Footer */}
       <div className="p-6 border-t border-[#333333] flex justify-between bg-[#121212] rounded-b-lg">
         <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#333333] text-[#E0E0E0] hover:bg-[#333333] transition">
             Cancelar
@@ -324,22 +340,6 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
             )}
         </button>
       </div>
-
-      <style jsx>{`
-        .input-dark {
-            width: 100%;
-            background-color: #121212;
-            border: 1px solid #333333;
-            color: #E0E0E0;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-dark:focus {
-            border-color: #C0A040;
-        }
-      `}</style>
     </div>
   )
 }
