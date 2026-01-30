@@ -16,32 +16,41 @@ export default function LoginPage() {
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+      e.preventDefault()
+      setError('')
 
-    if (!login || !password) {
-      setError('Preencha todos os campos.')
-      return
-    }
-
-    try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: login, 
-        password,
-      })
-
-      if (authError) {
-        setError('Credenciais inválidas. Tente novamente.')
+      const emailClean = login.trim().toLowerCase()
+      
+      if (!emailClean || !password) {
+        setError('Preencha todos os campos.')
         return
       }
 
-      router.push('/dashboard') 
+      const allowedDomain = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]*ifpb\.edu\.br$/
+      
+      if (!allowedDomain.test(emailClean)) {
+        setError('Acesso negado. Utilize um e-mail institucional do IFPB.')
+        return
+      }
 
-    } catch (err) {
-      console.error(err)
-      setError('Ocorreu um erro inesperado.')
+      try {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: emailClean, 
+          password,
+        })
+
+        if (authError) {
+          setError('E-mail ou senha incorretos.')
+          return
+        }
+
+        router.push('/dashboard') 
+
+      } catch (err) {
+        console.error(err)
+        setError('Ocorreu um erro inesperado ao conectar ao servidor.')
+      }
     }
-  }
 
   return (
     <div className="min-h-screen w-full bg-black text-gray-200 flex items-center justify-center p-4 font-sans">
