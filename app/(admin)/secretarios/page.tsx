@@ -5,6 +5,7 @@ import { SecretarioService, ISecretario } from '@/app/services/secretarioService
 import { SecretarioForm } from '@/app/components/secretarios/SecretarioForm'
 import { SecretarioDetails } from '@/app/components/secretarios/SecretarioDetails'
 import { Pagination } from '@/app/components/ui/Pagination'
+import { DataTable, Column } from '@/app/components/ui/DataTable'
 import { Plus, Search, Edit, Trash2, KeyRound } from 'lucide-react'
 
 export default function SecretariosPage() {
@@ -76,7 +77,84 @@ export default function SecretariosPage() {
     alert(`Link de redefinição de senha enviado para o e-mail de ${nome}.`)
   }
 
-  // --- Filtros ---
+  // --- Definição das Colunas ---
+  const columns: Column<ISecretario>[] = [
+    {
+      header: 'Nome',
+      accessor: (sec) => (
+        <div>
+          <button onClick={() => setViewSecretario(sec)} className="font-medium text-white hover:text-[#C0A040] hover:underline text-left">
+            {sec.nome}
+          </button>
+          <div className="text-[#AAAAAA] text-xs truncate max-w-[200px]" title={sec.email}>
+            {sec.email}
+          </div>
+        </div>
+      )
+    },
+    { header: 'SIAPE', accessor: 'siape' },
+    { header: 'Campus', accessor: 'campus' },
+    {
+      header: 'Nível',
+      accessor: (sec) => (
+        <span className={`px-2 py-1 text-xs font-bold rounded-full border ${
+            sec.role === 'Coordenador' 
+            ? 'bg-[#C0A040]/20 text-[#C0A040] border-[#C0A040]/50' 
+            : 'bg-blue-900/30 text-blue-400 border-blue-800'
+        }`}>
+            {sec.role}
+        </span>
+      )
+    },
+    {
+      header: 'Status',
+      accessor: (sec) => sec.ativo ? (
+        <div className="flex items-center gap-2" title="Ativo">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span className="text-xs text-green-400">Ativo</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2" title="Inativo">
+            <span className="h-3 w-3 rounded-full bg-red-900 border border-red-700 inline-block"></span>
+            <span className="text-xs text-red-500">Inativo</span>
+        </div>
+      )
+    },
+    {
+      header: 'Ações',
+      className: 'text-right',
+      accessor: (sec) => (
+        <div className="flex items-center justify-end space-x-2">
+          <button 
+              onClick={() => handleResetPassword(sec.nome)} 
+              className="text-[#AAAAAA] hover:text-blue-400 p-1" 
+              title="Resetar Senha"
+          >
+            <KeyRound className="w-5 h-5" />
+          </button>
+          <button 
+              onClick={() => handleEdit(sec)} 
+              className="text-[#AAAAAA] hover:text-[#C0A040] p-1" 
+              title="Editar"
+          >
+            <Edit className="w-5 h-5" />
+          </button>
+          <button 
+              onClick={() => handleToggleStatus(sec.id, sec.ativo, sec.nome)} 
+              className={`p-1 transition ${sec.ativo ? 'text-[#AAAAAA] hover:text-red-500' : 'text-red-500 hover:text-green-400'}`} 
+              title={sec.ativo ? "Revogar Acesso" : "Reativar Acesso"}
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      )
+    }
+  ]
+
+  // --- Filtros e Paginação ---
   const dadosFiltrados = secretarios.filter(s => {
     const matchBusca = 
       s.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -88,7 +166,6 @@ export default function SecretariosPage() {
     return matchBusca && matchRole
   })
 
-  // --- Paginação ---
   const totalPages = Math.ceil(dadosFiltrados.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedData = dadosFiltrados.slice(startIndex, startIndex + ITEMS_PER_PAGE)
@@ -161,98 +238,15 @@ export default function SecretariosPage() {
         </div>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela Componentizada */}
       <div className="bg-[#1F1F1F] rounded-lg border border-[#333333] flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full divide-y divide-[#333333]">
-            <thead className="bg-black">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Nome</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">SIAPE</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Campus</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Nível</th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">Status</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-[#C0A040]">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#333333] bg-[#1F1F1F]">
-              {loading ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-[#AAAAAA]">Carregando...</td></tr>
-              ) : paginatedData.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-[#AAAAAA]">Nenhum usuário encontrado.</td></tr>
-              ) : (
-                paginatedData.map((sec) => (
-                  <tr key={sec.id} className={`hover:bg-[#1A1A1A] transition-colors ${!sec.ativo ? 'opacity-50 bg-black/40' : ''}`}>
-                    <td className="px-6 py-4">
-                      <button onClick={() => setViewSecretario(sec)} className="font-medium text-white hover:text-[#C0A040] hover:underline text-left">
-                        {sec.nome}
-                      </button>
-                      <div className="text-[#AAAAAA] text-xs truncate max-w-[200px]" title={sec.email}>
-                        {sec.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#E0E0E0]">{sec.siape}</td>
-                    <td className="px-6 py-4 text-sm text-[#E0E0E0]">{sec.campus}</td>
-                    
-                    {/* Badge Nível */}
-                    <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-bold rounded-full border ${
-                            sec.role === 'Coordenador' 
-                            ? 'bg-[#C0A040]/20 text-[#C0A040] border-[#C0A040]/50' 
-                            : 'bg-blue-900/30 text-blue-400 border-blue-800'
-                        }`}>
-                            {sec.role}
-                        </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 text-center">
-                        {sec.ativo ? (
-                            <div className="flex justify-center" title="Ativo">
-                                <span className="relative flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                                </span>
-                            </div>
-                        ) : (
-                            <div className="flex justify-center" title="Inativo">
-                                <span className="h-3 w-3 rounded-full bg-red-900 border border-red-700 inline-block"></span>
-                            </div>
-                        )}
-                    </td>
-
-                    {/* Ações */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button 
-                            onClick={() => handleResetPassword(sec.nome)} 
-                            className="text-[#AAAAAA] hover:text-blue-400 p-1" 
-                            title="Resetar Senha"
-                        >
-                          <KeyRound className="w-5 h-5" />
-                        </button>
-                        <button 
-                            onClick={() => handleEdit(sec)} 
-                            className="text-[#AAAAAA] hover:text-[#C0A040] p-1" 
-                            title="Editar"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                            onClick={() => handleToggleStatus(sec.id, sec.ativo, sec.nome)} 
-                            className={`p-1 transition ${sec.ativo ? 'text-[#AAAAAA] hover:text-red-500' : 'text-red-500 hover:text-green-400'}`} 
-                            title={sec.ativo ? "Revogar Acesso" : "Reativar Acesso"}
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable 
+          columns={columns}
+          data={paginatedData}
+          isLoading={loading}
+          // Note que não passei onEdit/onDelete aqui porque criei uma coluna customizada de "Ações"
+          // que inclui o botão de chave (reset password) além de editar e excluir.
+        />
 
         {/* Paginação */}
         {!loading && dadosFiltrados.length > 0 && (

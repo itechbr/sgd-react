@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { SecretarioService, ISecretario } from '@/app/services/secretarioService'
 import { X, Save, AlertCircle } from 'lucide-react'
+import { FormInput } from '../ui/FormInput'
+import { FormSelect } from '../ui/FormSelect'
 
 interface SecretarioFormProps {
   secretarioToEdit?: ISecretario | null
@@ -78,54 +80,74 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="p-6">
         {error && (
-          <div className="bg-red-900/20 border border-red-500 text-red-200 p-3 rounded flex items-center gap-2 text-sm">
+          <div className="bg-red-900/20 border border-red-500 text-red-200 p-3 rounded flex items-center gap-2 text-sm mb-6">
             <AlertCircle size={16} />
             {error}
           </div>
         )}
 
-        <div>
-          <label className="block text-sm text-[#AAAAAA] mb-1">Nome Completo *</label>
-          <input name="nome" value={formData.nome} onChange={handleChange} required className="input-dark" placeholder="Ex: Maria Souza" />
-        </div>
+        <FormInput 
+            label="Nome Completo" 
+            name="nome" 
+            value={formData.nome} 
+            onChange={handleChange} 
+            required 
+            placeholder="Ex: Maria Souza"
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1">SIAPE *</label>
-            <input name="siape" value={formData.siape} onChange={handleChange} required className="input-dark" />
-          </div>
-          <div>
-            <label className="block text-sm text-[#AAAAAA] mb-1">Campus *</label>
-            <select name="campus" value={formData.campus} onChange={handleChange} className="input-dark">
-              <option value="João Pessoa">João Pessoa</option>
-              <option value="Campina Grande">Campina Grande</option>
-              <option value="Cajazeiras">Cajazeiras</option>
-              <option value="Reitoria">Reitoria</option>
-            </select>
-          </div>
+          <FormInput 
+            label="SIAPE" 
+            name="siape" 
+            value={formData.siape} 
+            onChange={handleChange} 
+            required 
+          />
+          <FormSelect 
+            label="Campus"
+            name="campus"
+            value={formData.campus}
+            onChange={handleChange}
+            options={[
+              { value: 'João Pessoa', label: 'João Pessoa' },
+              { value: 'Campina Grande', label: 'Campina Grande' },
+              { value: 'Cajazeiras', label: 'Cajazeiras' },
+              { value: 'Reitoria', label: 'Reitoria' }
+            ]}
+          />
         </div>
 
-        <div>
-          <label className="block text-sm text-[#AAAAAA] mb-1">E-mail Institucional *</label>
-          <input name="email" type="email" value={formData.email} onChange={handleChange} required className="input-dark" />
-        </div>
+        <FormInput 
+            label="E-mail Institucional" 
+            name="email" 
+            type="email" 
+            value={formData.email} 
+            onChange={handleChange} 
+            required 
+        />
 
-        <div className="pt-4 border-t border-[#333333]">
-          <label className="block text-sm text-[#C0A040] font-semibold mb-2">Nível de Acesso</label>
-          <select name="role" value={formData.role} onChange={handleChange} className="input-dark mb-4">
-            <option value="Secretário">Secretário (Operacional)</option>
-            <option value="Coordenador">Coordenador (Administrativo)</option>
-          </select>
+        <div className="pt-4 border-t border-[#333333] mt-2">
+          <FormSelect 
+            label="Nível de Acesso"
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            helperText="Define as permissões do usuário no sistema."
+            options={[
+              { value: 'Secretário', label: 'Secretário (Operacional)' },
+              { value: 'Coordenador', label: 'Coordenador (Administrativo)' }
+            ]}
+          />
 
-          <label className="flex items-center p-3 rounded border border-[#333333] bg-black/20 cursor-pointer hover:border-[#C0A040]/50 transition">
+          <label className="flex items-center p-3 rounded border border-[#333333] bg-black/20 cursor-pointer hover:border-[#C0A040]/50 transition mt-2">
             <input 
               type="checkbox" 
               name="ativo" 
               checked={formData.ativo} 
               onChange={handleChange} 
-              className="w-5 h-5 accent-[#C0A040] bg-[#121212] border-[#333333] rounded" 
+              className="w-5 h-5 accent-[#C0A040] bg-[#121212] border-[#333333] rounded cursor-pointer" 
             />
             <div className="ml-3">
               <span className="text-sm font-medium text-[#E0E0E0]">Conta Ativa</span>
@@ -134,7 +156,7 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
           </label>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-[#333333] mt-2">
+        <div className="flex justify-end gap-3 pt-6 border-t border-[#333333] mt-6">
           <button type="button" onClick={onCancel} className="px-4 py-2 rounded border border-[#333333] text-[#E0E0E0] hover:bg-[#333333] transition">
             Cancelar
           </button>
@@ -148,22 +170,6 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
           </button>
         </div>
       </form>
-
-      <style jsx>{`
-        .input-dark {
-            width: 100%;
-            background-color: #121212;
-            border: 1px solid #333333;
-            color: #E0E0E0;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-dark:focus {
-            border-color: #C0A040;
-        }
-      `}</style>
     </div>
   )
 }

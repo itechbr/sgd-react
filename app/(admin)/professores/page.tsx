@@ -6,7 +6,8 @@ import { IProfessor } from '@/app/type/index'
 import { ProfessorForm } from '@/app/components/professores/ProfessorForm'
 import { ProfessorDetails } from '@/app/components/professores/ProfessorDetails'
 import { Pagination } from '@/app/components/ui/Pagination'
-import { Plus, Search, Edit, Trash2, ExternalLink, User } from 'lucide-react'
+import { DataTable, Column } from '@/app/components/ui/DataTable'
+import { Plus, Search, ExternalLink } from 'lucide-react'
 
 export default function ProfessoresPage() {
   const [professores, setProfessores] = useState<IProfessor[]>([])
@@ -62,24 +63,98 @@ export default function ProfessoresPage() {
     carregarProfessores()
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(professor: IProfessor) {
     if (confirm('Tem certeza que deseja excluir este professor?')) {
       try {
-        await ProfessorService.delete(id)
-        setProfessores(prev => prev.filter(p => p.id !== id))
-        
-        // Ajuste de paginação após exclusão
-        const totalItems = professores.length - 1
-        const maxPages = Math.ceil(totalItems / ITEMS_PER_PAGE)
-        if (currentPage > maxPages && maxPages > 0) setCurrentPage(maxPages)
-
+        if (professor.id) {
+            await ProfessorService.delete(professor.id)
+            setProfessores(prev => prev.filter(p => p.id !== professor.id))
+            
+            // Ajuste de paginação
+            const totalItems = professores.length - 1
+            const maxPages = Math.ceil(totalItems / ITEMS_PER_PAGE)
+            if (currentPage > maxPages && maxPages > 0) setCurrentPage(maxPages)
+        }
       } catch (error) {
         alert('Erro ao excluir professor.')
       }
     }
   }
 
-  // --- Lógica de Filtro ---
+  // --- Auxiliares de Estilo ---
+  const getCategoriaStyle = (tipo: string) => {
+    switch(tipo) {
+      case 'Permanente': return 'bg-[#C0A040]/20 text-[#C0A040] border-[#C0A040]/50'
+      case 'Colaborador': return 'bg-blue-900/30 text-blue-400 border-blue-800'
+      case 'Visitante': return 'bg-purple-900/30 text-purple-400 border-purple-800'
+      default: return 'bg-gray-800 text-gray-400 border-gray-700'
+    }
+  }
+
+  // --- Definição das Colunas ---
+  const columns: Column<IProfessor>[] = [
+    {
+      header: 'Professor / Áreas',
+      accessor: (prof) => (
+        <div>
+          <button onClick={() => setViewProfessor(prof)} className="font-medium text-white hover:text-[#C0A040] hover:underline text-left">
+            {prof.nome}
+          </button>
+          <div className="text-[#AAAAAA] text-xs mt-1 truncate max-w-[200px]" title={prof.areas}>
+            {prof.areas || '—'}
+          </div>
+        </div>
+      )
+    },
+    { header: 'Instituição', accessor: 'instituicao' },
+    { header: 'Titulação', accessor: 'titulacao' },
+    {
+      header: 'Lattes',
+      className: 'text-center',
+      accessor: (prof) => prof.lattes ? (
+        <a 
+            href={prof.lattes} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="inline-flex justify-center text-[#AAAAAA] hover:text-[#C0A040] transition"
+            title="Ver Currículo Lattes"
+        >
+            <ExternalLink size={18} />
+        </a>
+      ) : (
+        <span className="text-[#333333] cursor-not-allowed flex justify-center">
+            <ExternalLink size={18} />
+        </span>
+      )
+    },
+    {
+      header: 'Categoria',
+      className: 'text-center',
+      accessor: (prof) => (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getCategoriaStyle(prof.tipo)}`}>
+            {prof.tipo}
+        </span>
+      )
+    },
+    {
+      header: 'Status',
+      className: 'text-center',
+      accessor: (prof) => prof.ativo ? (
+        <div className="flex justify-center" title="Ativo">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+        </div>
+      ) : (
+        <div className="flex justify-center" title="Inativo">
+            <span className="h-3 w-3 rounded-full bg-red-900 border border-red-700 inline-block"></span>
+        </div>
+      )
+    }
+  ]
+
+  // --- Filtros e Paginação ---
   const dadosFiltrados = professores.filter(p => {
     const matchBusca = 
       p.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -91,20 +166,9 @@ export default function ProfessoresPage() {
     return matchBusca && matchTipo
   })
 
-  // --- Lógica de Paginação ---
   const totalPages = Math.ceil(dadosFiltrados.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedData = dadosFiltrados.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-
-  // --- Auxiliares de Estilo (Baseado no JS original) ---
-  const getCategoriaStyle = (tipo: string) => {
-    switch(tipo) {
-      case 'Permanente': return 'bg-[#C0A040]/20 text-[#C0A040] border-[#C0A040]/50'
-      case 'Colaborador': return 'bg-blue-900/30 text-blue-400 border-blue-800'
-      case 'Visitante': return 'bg-purple-900/30 text-purple-400 border-purple-800'
-      default: return 'bg-gray-800 text-gray-400 border-gray-700'
-    }
-  }
 
   return (
     <div className="space-y-6 relative">
@@ -177,112 +241,15 @@ export default function ProfessoresPage() {
         </div>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela Componentizada */}
       <div className="bg-[#1F1F1F] rounded-lg border border-[#333333] flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full divide-y divide-[#333333]">
-            <thead className="bg-black">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Professor / Áreas</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Instituição</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Titulação</th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">Lattes</th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">Categoria</th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">Status</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-[#C0A040]">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#333333] bg-[#1F1F1F]">
-              {loading ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-[#AAAAAA]">Carregando...</td></tr>
-              ) : paginatedData.length === 0 ? (
-                <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-[#AAAAAA] flex flex-col items-center justify-center">
-                        <User className="w-12 h-12 mb-2 opacity-20" />
-                        <p>Nenhum professor encontrado.</p>
-                    </td>
-                </tr>
-              ) : (
-                paginatedData.map((prof) => (
-                  <tr key={prof.id} className={`hover:bg-[#1A1A1A] transition-colors ${!prof.ativo ? 'opacity-60 bg-black/20' : ''}`}>
-                    <td className="px-6 py-4">
-                      <button onClick={() => setViewProfessor(prof)} className="font-medium text-white hover:text-[#C0A040] hover:underline text-left">
-                        {prof.nome}
-                      </button>
-                      <div className="text-[#AAAAAA] text-xs mt-1 truncate max-w-[200px]" title={prof.areas}>
-                        {prof.areas || '—'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#E0E0E0]">{prof.instituicao}</td>
-                    <td className="px-6 py-4 text-sm text-[#E0E0E0]">{prof.titulacao}</td>
-                    
-                    {/* Coluna Lattes */}
-                    <td className="px-6 py-4 text-center">
-                        {prof.lattes ? (
-                            <a 
-                                href={prof.lattes} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="inline-flex justify-center text-[#AAAAAA] hover:text-[#C0A040] transition"
-                                title="Ver Currículo Lattes"
-                            >
-                                <ExternalLink size={18} />
-                            </a>
-                        ) : (
-                            <span className="text-[#333333] cursor-not-allowed flex justify-center">
-                                <ExternalLink size={18} />
-                            </span>
-                        )}
-                    </td>
-
-                    {/* Coluna Categoria */}
-                    <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getCategoriaStyle(prof.tipo)}`}>
-                            {prof.tipo}
-                        </span>
-                    </td>
-
-                    {/* Coluna Status */}
-                    <td className="px-6 py-4 text-center">
-                        {prof.ativo ? (
-                            <div className="flex justify-center" title="Ativo">
-                                <span className="relative flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                                </span>
-                            </div>
-                        ) : (
-                            <div className="flex justify-center" title="Inativo">
-                                <span className="h-3 w-3 rounded-full bg-red-900 border border-red-700 inline-block"></span>
-                            </div>
-                        )}
-                    </td>
-
-                    {/* Ações */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-3">
-                        <button 
-                            onClick={() => handleEdit(prof)} 
-                            className="text-[#AAAAAA] hover:text-[#C0A040] transition" 
-                            title="Editar"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button 
-                            onClick={() => handleDelete(prof.id)} 
-                            className="text-[#AAAAAA] hover:text-red-500 transition" 
-                            title="Excluir"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable 
+            columns={columns}
+            data={paginatedData}
+            isLoading={loading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+        />
 
         {/* Paginação */}
         {!loading && dadosFiltrados.length > 0 && (
