@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { IProfessor } from '@/app/type/index' 
-
+// Atualizando
 // Cliente Supabase para uso no navegador
 const supabase = createClient()
 
