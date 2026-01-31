@@ -5,24 +5,25 @@ export interface SelectOption {
   label: string
 }
 
+// 1. Tornamos 'options' opcional (?) na interface
 interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label: string
-  options: SelectOption[]
+  options?: SelectOption[] 
   error?: string
   helperText?: string
 }
 
 export function FormSelect({
   label,
-  options,
+  options = [], // 2. Valor padrão de array vazio para evitar o erro do .map
   error,
   helperText,
   className = '',
   id,
-  children, // Permite passar opções manualmente como children se preferir
+  children,
   ...props
 }: FormSelectProps) {
-  // Gera ID único se não fornecido
+  
   const selectId = id || `select-${label.toLowerCase().replace(/\s+/g, '-')}`
 
   return (
@@ -54,17 +55,17 @@ export function FormSelect({
             Selecione uma opção
           </option>
           
-          {options.map((option) => (
+          {/* Renderiza options se existirem */}
+          {options && options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
           
-          {/* Caso queira passar <option> manualmente como children */}
+          {/* Renderiza children se existirem */}
           {children}
         </select>
 
-        {/* Ícone da seta (Chevron Down) customizado para manter o tema */}
         <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#AAAAAA]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />

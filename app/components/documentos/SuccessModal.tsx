@@ -1,36 +1,35 @@
-type Props = {
+"use client";
+
+interface SuccessModalProps {
   open: boolean;
   onClose: () => void;
-};
+}
 
-export default function SuccessModal({ open, onClose }: Props) {
+export default function SuccessModal({ open, onClose }: SuccessModalProps) {
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
-      <div
-        className="card-std w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center p-5 border-b border-sgd-border">
-          <h3 className="text-lg font-semibold text-sgd-gold">
-            Formulário Enviado
-          </h3>
-          <button onClick={onClose}>✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-[#1F1F1F] border border-sgd-border max-w-md w-full p-8 text-center relative rounded-xl shadow-2xl animate-in zoom-in-95 duration-200">
+        
+        {/* Ícone de Sucesso */}
+        <div className="mx-auto w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mb-6 border border-green-800/50">
+          <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
         </div>
 
-        <div className="p-6 text-sm">
-          Os dados do formulário foram validados com sucesso.
-        </div>
+        <h3 className="text-2xl font-bold text-white mb-2">Documento Gerado!</h3>
+        <p className="text-gray-400 mb-8 leading-relaxed">
+          Os dados foram processados com sucesso. O download do arquivo PDF iniciará automaticamente em instantes.
+        </p>
 
-        <div className="p-4 border-t border-sgd-border flex justify-end">
-          <button onClick={onClose} className="btn-primary px-6 py-2 text-sm">
-            Fechar
-          </button>
-        </div>
+        <button 
+          onClick={onClose}
+          className="w-full bg-sgd-gold hover:bg-[#b09030] text-white font-bold py-3.5 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg shadow-yellow-900/20"
+        >
+          Fechar
+        </button>
       </div>
     </div>
   );
