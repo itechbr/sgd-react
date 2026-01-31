@@ -25,9 +25,9 @@ export default function LoginPage() {
     const emailClean = login.trim().toLowerCase()
     
     // 1. VALIDAÇÃO DE FORMATO E DOMÍNIO (A mensagem que você queria)
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@ifpb\.edu\.br$/
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]*\.)?ifpb\.edu\.br$/
     if (!emailRegex.test(emailClean)) {
-      setError('Por favor, utilize seu e-mail institucional (@ifpb.edu.br) para acessar o sistema.')
+      setError('Por favor, utilize seu e-mail institucional do IFPB para acessar o sistema.')
       setIsLoading(false)
       return
     }
