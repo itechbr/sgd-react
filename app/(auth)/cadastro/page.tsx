@@ -162,6 +162,7 @@ export default function RegisterPage() {
           </button>
 
           <div className="mt-8 text-center border-t border-[#333333] pt-6">
+            <p className="text-gray-400 text-sm">Já possui uma conta?</p>
             <Link href="/login" className="text-[#C0A040] font-bold hover:underline">
               Fazer login no sistema
             </Link>
