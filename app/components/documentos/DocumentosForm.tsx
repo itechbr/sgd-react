@@ -96,9 +96,19 @@ export default function DocumentosForm() {
         const opt = {
           margin: 0,
           filename: `defesa_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          image: { 
+            type: 'jpeg', 
+            quality: 0.98 
+          } as const, // <-- Isso resolve o erro 2 e 3
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true 
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' 
+          } as const // <-- Isso garante que não dê erro no jsPDF também
         };
 
         await html2pdf().set(opt).from(element).save();
