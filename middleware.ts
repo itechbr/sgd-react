@@ -8,9 +8,17 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Prevenção de erro de variáveis de ambiente no build da Vercel
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    return response
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -31,26 +39,28 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // Importante: getUser() é mais seguro que getSession() para middleware
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // 1. DEFINIÇÃO DE ROTAS PÚBLICAS
-  // Adicionamos '/cadastro' aqui para o segurança deixar passar
-  const isPublicRoute = 
-    pathname.startsWith('/login') || 
-    pathname.startsWith('/cadastro') || 
-    pathname.startsWith('/auth')
+  // 1. DEFINIÇÃO DE ROTAS PÚBLICAS (Melhorado)
+  const isLoginPage = pathname === '/login'
+  const isRegisterPage = pathname === '/cadastro'
+  const isAuthRoute = pathname.startsWith('/auth')
+  const isRoot = pathname === '/'
+  
+  const isPublicRoute = isLoginPage || isRegisterPage || isAuthRoute || isRoot
 
   // 2. Lógica de Proteção:
-  // Se NÃO houver usuário E a rota NÃO for pública -> Redireciona para Login
   if (!user && !isPublicRoute) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    // Redireciona para login mantendo a URL que o usuário tentou acessar como parâmetro
+    const redirectUrl = new URL('/login', request.url)
+    return NextResponse.redirect(redirectUrl)
   }
 
   // 3. Evitar Login/Cadastro Duplo:
-  // Se o usuário já está logado, ele não precisa ver login ou cadastro de novo
-  if (user && (pathname === '/login' || pathname === '/cadastro')) {
+  if (user && (isLoginPage || isRegisterPage)) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -60,12 +70,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (files like logo_sgd.webp)
+     * Matcher otimizado para não processar arquivos estáticos e pastas internas
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
