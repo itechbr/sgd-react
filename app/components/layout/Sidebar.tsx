@@ -146,7 +146,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             </li>
             <li>
-              <Link href="/profile" className={getLinkClass('/profile')} onClick={onClose}>
+              <Link href="/perfil" className={getLinkClass('/perfil')} onClick={onClose}>
                 <User className="w-5 h-5 mr-3 opacity-70" />
                 Meu Perfil
               </Link>
