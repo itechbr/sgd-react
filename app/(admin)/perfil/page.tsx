@@ -1,71 +1,80 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
+import { useEffect, useState } from "react";
+import { getProfile } from "../../services/profileService";
 import ActivityHistory from "../../components/perfil/ActivityHistory";
 import EditProfileModal from "../../components/perfil/EditProfileModal";
 
-export default function PerfilPage() {
-  const router = useRouter();
+export type Profile = {
+  name_full: string;
+  role: string;
+  phone: string;
+  email: string;
+};
 
-  const [openModal, setOpenModal] = useState(false);
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [user, setUser] = useState({
-    name: "Diogo Aguiar",
-    role: "Administrador do Sistema",
-    email: "diogo.aguiar@ifpb.edu.br",
-  });
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const data = await getProfile();
+        setProfile(data);
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  function handleSave(updatedUser: typeof user) {
-    setUser(updatedUser);
+    loadProfile();
+  }, []);
+
+  if (loading) {
+    return <p className="text-center text-[#888]">Carregando perfil...</p>;
+  }
+
+  if (!profile) {
+    return <p className="text-center text-red-400">Perfil não encontrado</p>;
   }
 
   return (
-    <main className="p-8 flex justify-center">
-      <div className="w-full max-w-3xl space-y-8">
+    <section className="p-8 max-w-4xl mx-auto space-y-10">
+      {/* Card do Perfil */}
+      <div className="bg-[#1F1F1F] p-8 rounded-xl border border-[#333333]">
+        <h2 className="text-2xl font-semibold text-[#E6C850]">
+          {profile.name_full}
+        </h2>
 
-        {/* CARD DE PERFIL */}
-        <div className="bg-[#1F1F1F] p-8 rounded-xl border border-[#333333] relative">
+        <p className="text-[#AAAAAA]">{profile.role}</p>
+        <p className="text-sm text-[#C0A040] mt-1">{profile.email}</p>
 
-          {/* BOTÃO HOME */}
+        <p className="mt-4 text-sm">
+          <strong>Telefone:</strong> {profile.phone}
+        </p>
+
+        <div className="mt-6 text-right">
           <button
-            onClick={() => router.push("/dashboard")}
-            className="absolute top-6 right-6 text-[#C0A040] hover:text-[#E6C850]"
-            title="Voltar ao Dashboard"
+            onClick={() => setIsModalOpen(true)}
+            className="rounded-md bg-[#E6C850] px-4 py-2 text-sm font-medium text-black"
           >
-            🏠
+            Editar perfil
           </button>
-
-          <h2 className="text-2xl font-semibold text-[#E6C850]">
-            {user.name}
-          </h2>
-
-          <p className="text-[#AAAAAA]">{user.role}</p>
-          <p className="text-[#C0A040] text-sm mt-2">{user.email}</p>
-
-          <div className="mt-6 text-right">
-            <button
-              onClick={() => setOpenModal(true)}
-              className="bg-[#C0A040] text-black px-5 py-2 rounded font-semibold text-sm hover:bg-[#E6C850]"
-            >
-              Editar Perfil
-            </button>
-          </div>
         </div>
-
-        {/* HISTÓRICO DE ATIVIDADES */}
-        <ActivityHistory />
-
       </div>
 
-      {openModal && (
-        <EditProfileModal
-          user={user}
-          onClose={() => setOpenModal(false)}
-          onSave={handleSave}
-        />
-      )}
-    </main>
+      {/* Modal */}
+      <EditProfileModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        profile={profile}
+        onProfileUpdated={setProfile}
+      />
+
+      {/* Histórico */}
+      <ActivityHistory />
+    </section>
   );
 }

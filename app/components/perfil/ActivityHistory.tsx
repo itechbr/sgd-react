@@ -1,86 +1,57 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { getActivities } from "../../services/profileService";
+
 type Activity = {
-  icon: "clock" | "mail" | "check";
-  text: string;
-  date: string; // formato ISO: YYYY-MM-DD
-};
-
-const activities: Activity[] = [
-  {
-    icon: "clock",
-    text: "Participou como avaliador na defesa de João Silva",
-    date: "2025-10-15",
-  },
-  {
-    icon: "mail",
-    text: "Enviou solicitação de prorrogação de prazo",
-    date: "2025-11-03",
-  },
-  {
-    icon: "check",
-    text: "Atualizou o perfil de usuário",
-    date: "2025-11-09",
-  },
-  {
-    icon: "clock",
-    text: "Assistiu defesa de Maria Oliveira",
-    date: "2025-11-10",
-  },
-  {
-    icon: "mail",
-    text: "Enviou documento complementar",
-    date: "2025-11-11",
-  },
-];
-
-const iconPaths = {
-  clock:
-    "M12 8v4l3 3m6 1.5A9.003 9.003 0 0012 3a9 9 0 00-9 9.5 8.998 8.998 0 006 8.485V21h6v-.015a8.998 8.998 0 006-8.485z",
-  mail:
-    "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6",
-  check: "M5 13l4 4L19 7",
+  id: string;
+  description: string;
+  created_at: string;
 };
 
 export default function ActivityHistory() {
-  const recentActivities = [...activities]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getActivities();
+      setActivities(data);
+    }
+
+    load();
+  }, []);
 
   return (
-    <section className="space-y-4">
-      <h3 className="text-[#E6C850] font-semibold text-lg">
+    <section>
+      <h3 className="text-lg font-semibold text-[#E6C850] mb-4">
         Histórico de Atividades
       </h3>
 
-      {recentActivities.map((activity, index) => (
-        <div
-          key={index}
-          className="flex items-start gap-3 bg-[#181818] p-4 rounded-lg border border-[#333333]"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5 text-[#C0A040] mt-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <div className="space-y-4">
+        {activities.map(activity => (
+          <div
+            key={activity.id}
+            className="flex items-start gap-4 bg-[#1F1F1F] border border-[#333] p-4 rounded-xl"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.8}
-              d={iconPaths[activity.icon]}
-            />
-          </svg>
+            <div className="text-[#C0A040] mt-1">✔</div>
 
-          <div>
-            <p className="text-[#E0E0E0]">{activity.text}</p>
-            <p className="text-xs text-[#888]">
-              {new Date(activity.date).toLocaleDateString("pt-BR")}
-            </p>
+            <div>
+              <p className="text-[#E0E0E0] font-medium">
+                {activity.description}
+              </p>
+              <p className="text-xs text-[#888]">
+                {new Date(activity.created_at).toLocaleDateString("pt-BR")}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+
+        {activities.length === 0 && (
+          <p className="text-sm text-[#888]">
+            Nenhuma atividade registrada.
+          </p>
+        )}
+      </div>
     </section>
   );
 }
