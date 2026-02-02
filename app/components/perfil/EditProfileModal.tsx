@@ -41,7 +41,7 @@ export default function EditProfileModal({
         phone,
       });
 
-      // ✅ atualização correta do estado no pai
+      
       onProfileUpdated((prev) => {
         if (!prev) return prev;
 
