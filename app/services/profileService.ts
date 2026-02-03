@@ -23,7 +23,6 @@ export async function getProfile(): Promise<Profile | null> {
   return data ?? null;
 }
 
-// ATUALIZADO: Agora aceita registration_id
 export async function updateProfile(
   data: Pick<Profile, "full_name" | "role" | "phone" | "campus" | "department" | "registration_id">
 ) {
@@ -39,7 +38,7 @@ export async function updateProfile(
       phone: data.phone,
       campus: data.campus,
       department: data.department,
-      registration_id: data.registration_id, // Adicionado aqui
+      registration_id: data.registration_id,
     })
     .eq("id", user.id);
 
@@ -53,18 +52,27 @@ export async function getActivityHistory(): Promise<Activity[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
+  // Ajuste: Verifique se a coluna na tabela 'defesas' é 'user_id' ou 'aluno_id'
+  // Geralmente em sistemas escolares, a defesa está ligada ao ID do aluno, 
+  // que por sua vez está ligado ao user.id. 
+  // Assumindo aqui que existe uma coluna direta ou que você ajustará a query.
   const { data, error } = await supabase
     .from("defesas")
     .select("id, titulo, data, status")
-    .eq("user_id", user.id)
+    // .eq("aluno_id", user.id) <--- Verifique qual campo liga a defesa ao usuário
     .order("data", { ascending: false });
 
-  if (error) return [];
+  if (error) {
+    console.error("Erro ao buscar atividades:", error);
+    return [];
+  }
 
+  // CORREÇÃO AQUI:
+  // As propriedades retornadas devem ter o MESMO NOME da interface Activity
   return data.map((d: any) => ({
     id: d.id,
-    action: `Defesa: ${d.titulo}`,
-    date: d.data,
-    type: d.status
+    titulo: d.titulo, // Corrigido de 'action' para 'titulo'
+    data: d.data,     // Corrigido de 'date' para 'data'
+    status: d.status  // Corrigido de 'type' para 'status'
   }));
 }
