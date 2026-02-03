@@ -78,7 +78,7 @@ export default function DashboardPage() {
             {/* Gráfico Pizza */}
             <ChartCard title="Status dos Alunos">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                    <div className="h-56 aspect-square relative mx-auto">
+                    <div className="h-71 aspect-square relative mx-auto">
                        {!loading && <StatusChart data={chartDataStatus} labels={chartLabelsStatus} colors={chartColorsStatus} />}
                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                           <span className="text-3xl font-bold text-[#E0E0E0]">{totalAlunos}</span>
@@ -88,14 +88,14 @@ export default function DashboardPage() {
                     
                     <div className="space-y-3">
                         {chartLabelsStatus.map((label, i) => (
-                            <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-[#2A2A2A] transition-colors group cursor-default">
+                            <div key={i} className="flex items-center justify-between p-1 rounded-lg hover:bg-[#2A2A2A] transition-colors group cursor-default">
                                 <div className="flex items-center gap-3">
                                     <span className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: chartColorsStatus[i], boxShadow: `0 0 8px ${chartColorsStatus[i]}` }}></span>
                                     <span className="text-sm text-[#CCCCCC] group-hover:text-white transition-colors">{label}</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block text-sm font-bold text-[#E0E0E0]">{chartDataStatus[i]}</span>
-                                    <span className="text-[10px] text-[#666]">{((chartDataStatus[i] || 0) / totalAlunos * 100).toFixed(0)}%</span>
+                                    <span className="block text-sm text-[15px] font-bold text-[#E0E0E0]">{chartDataStatus[i]}</span>
+                                    <span className="text-[15px] text-[#666]">{((chartDataStatus[i] || 0) / totalAlunos * 100).toFixed(0)}%</span>
                                 </div>
                             </div>
                         ))}
@@ -134,9 +134,14 @@ export default function DashboardPage() {
                 )}
             </div>
             
-            <button className="w-full mt-4 py-3 rounded-xl border border-dashed border-[#333] text-[#666] text-sm hover:border-[#C0A040] hover:text-[#C0A040] transition-all flex items-center justify-center gap-2">
-                <Users size={16} /> Gerenciar
-            </button>
+            {/* LINK PARA GERENCIAR ALUNOS */}
+            <Link 
+                href="/alunos" 
+                className="w-full mt-4 py-3 rounded-xl border border-dashed border-[#333] text-[#666] text-sm hover:border-[#C0A040] hover:text-[#C0A040] hover:bg-[#C0A040]/5 transition-all flex items-center justify-center gap-2"
+            >
+                <Users size={16} /> 
+                Gerenciar Solicitações
+            </Link>
         </ChartCard>
 
       </div>
