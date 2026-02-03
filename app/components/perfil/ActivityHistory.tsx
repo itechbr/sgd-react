@@ -1,57 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getActivities } from "../../services/profileService";
+import { Activity } from "../../type/activity";
 
-type Activity = {
-  id: string;
-  description: string;
-  created_at: string;
-};
+interface ActivityHistoryProps {
+  activities: Activity[];
+  loading: boolean;
+}
 
-export default function ActivityHistory() {
-  const [activities, setActivities] = useState<Activity[]>([]);
+export default function ActivityHistory({
+  activities,
+  loading,
+}: ActivityHistoryProps) {
+  if (loading) {
+    return (
+      <div className="bg-[#1F1F1F] p-6 rounded-xl border border-[#333333]">
+        <p className="text-sm text-[#888]">Carregando histórico...</p>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    async function load() {
-      const data = await getActivities();
-      setActivities(data);
-    }
-
-    load();
-  }, []);
+  if (!activities.length) {
+    return (
+      <div className="bg-[#1F1F1F] p-6 rounded-xl border border-[#333333]">
+        <p className="text-sm text-[#888]">
+          Nenhuma atividade registrada
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <section>
-      <h3 className="text-lg font-semibold text-[#E6C850] mb-4">
-        Histórico de Atividades
+    <div className="bg-[#1F1F1F] p-6 rounded-xl border border-[#333333]">
+      <h3 className="text-lg font-semibold mb-4 text-[#E6C850]">
+        Histórico de atividades
       </h3>
 
-      <div className="space-y-4">
-        {activities.map(activity => (
-          <div
+      <ul className="space-y-3">
+        {activities.map((activity) => (
+          <li
             key={activity.id}
-            className="flex items-start gap-4 bg-[#1F1F1F] border border-[#333] p-4 rounded-xl"
+            className="flex items-center justify-between rounded-md border border-[#333333] px-4 py-3"
           >
-            <div className="text-[#C0A040] mt-1">✔</div>
-
             <div>
-              <p className="text-[#E0E0E0] font-medium">
-                {activity.description}
-              </p>
-              <p className="text-xs text-[#888]">
-                {new Date(activity.created_at).toLocaleDateString("pt-BR")}
+              <p className="text-sm font-medium">{activity.titulo}</p>
+              <p className="text-xs text-[#777]">
+                {new Date(activity.data).toLocaleDateString()}
               </p>
             </div>
-          </div>
-        ))}
 
-        {activities.length === 0 && (
-          <p className="text-sm text-[#888]">
-            Nenhuma atividade registrada.
-          </p>
-        )}
-      </div>
-    </section>
+            <span
+              className={`text-xs font-medium px-2 py-1 rounded-full ${
+                activity.status === "completed"
+                  ? "bg-green-600/20 text-green-400"
+                  : activity.status === "pending"
+                  ? "bg-yellow-600/20 text-yellow-400"
+                  : "bg-gray-600/20 text-gray-400"
+              }`}
+            >
+              {activity.status}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

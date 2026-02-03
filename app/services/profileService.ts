@@ -1,8 +1,37 @@
-import { createClient} from "@/lib/supabase/client";
+import {createClient} from "@/lib/supabase/client";
+import { Profile } from "@/app/type/perfil";
+import { Activity } from "@/app/type/activity";
 
 const supabase = createClient()
 
-export async function getProfile() {
+//info do perfil
+export async function getProfile(): Promise<Profile | null> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("Usuário não autenticado");
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, role, phone")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao buscar perfil:", error);
+    throw error;
+  }
+
+  return data ?? null;
+}
+
+export async function updateProfile(
+  data: Pick<Profile, "full_name" | "role" | "phone">
+) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -11,85 +40,43 @@ export async function getProfile() {
     throw new Error("Usuário não autenticado");
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, registration_number")
-    .eq("id", user.id)
-    .maybeSingle();
+    .update({
+      full_name: data.full_name,
+      role: data.role,
+      phone: data.phone,
+    })
+    .eq("id", user.id);
 
   if (error) {
-    console.error("Supabase error:", error);
+    console.error("Erro ao atualizar perfil:", error);
+    throw error;
+  }
+}
+
+
+// Historico
+export async function getActivityHistory(): Promise<Activity[]> {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("Usuário não autenticado");
+  }
+
+  const { data, error } = await supabase
+    .from("defesas")
+    .select("id, titulo, data, status")
+    .eq("user_id", user.id)
+    .order("data", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar histórico:", error);
     throw error;
   }
 
-  if (!data) {
-    return null;
-  }
-
-  return {
-    name_full: data.full_name,          
-    role: "Usuário Veterano",            
-    phone: "",                           
-    email: data.email,
-  };
-}
-
-export async function updateProfile({
-  name_full,
-  phone,
-}: {
-  name_full: string;
-  phone: string;
-}) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Usuário não autenticado");
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ name_full, phone })
-    .eq("id", user.id);
-
-  if (error) throw error;
-
-  // registra atividade
-  await supabase.from("activity_history").insert({
-    user_id: user.id,
-    description: "Atualizou o perfil de usuário",
-  });
-
-  return { name_full, phone };
-}
-
-export async function getActivities() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Usuário não autenticado");
-
-  const { data, error } = await supabase
-    .from("activity_history")
-    .select("id, description, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-
-  return data;
-}
-
-export async function addActivity(description: string) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return;
-
-  await supabase.from("activity_history").insert({
-    user_id: user.id,
-    description,
-  });
+  return data ?? [];
 }
