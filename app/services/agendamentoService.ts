@@ -1,91 +1,116 @@
-// app/services/agendamentoService.ts
 'use client'
 
-import { IAgendamento } from '@/app/type'
+import { createClient } from '@/lib/supabase/client'
+import { IAgendamento, IAluno, IDefesa } from '@/app/type'
 
-const STORAGE_KEY = 'agendamentos'
+const supabase = createClient()
 
-const getInitialAgendamentos = (): IAgendamento[] => {
-  // Verifique se está no ambiente do navegador antes de acessar o localStorage
-  if (typeof window === 'undefined') {
-    return []
+const mapearDefesaParaAgendamento = (defesa: any): IAgendamento => {
+  return {
+    id: defesa.id,
+    aluno: defesa.alunos?.nome || 'Aluno não encontrado',
+    titulo: defesa.titulo,
+    data: defesa.data,
+    hora: defesa.horario,
+    aluno_id: defesa.aluno_id,
   }
-
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    return JSON.parse(stored)
-  }
-
-  // Se não houver nada no localStorage, crie alguns dados mockados
-  const mockAgendamentos: IAgendamento[] = [
-    {
-      id: 1,
-      aluno: 'João da Silva',
-      titulo: 'Dissertação sobre Engenharia de Software',
-      data: '2024-08-15',
-      hora: '14:00',
-    },
-    {
-      id: 2,
-      aluno: 'Maria Oliveira',
-      titulo: 'Tese sobre Inteligência Artificial',
-      data: '2024-08-20',
-      hora: '10:30',
-    },
-  ]
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(mockAgendamentos))
-  return mockAgendamentos
 }
 
 export const getAgendamentos = async (): Promise<IAgendamento[]> => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(getInitialAgendamentos())
-    }, 500) // Simula um delay de rede
-  })
+  const { data, error } = await supabase
+    .from('defesas')
+    .select(`
+      id,
+      aluno_id,
+      titulo,
+      data,
+      horario,
+      alunos (
+        nome,
+        status
+      )
+    `)
+  
+  if (error) {
+    console.error('Erro ao buscar defesas:', error.message)
+    throw new Error('Não foi possível buscar os agendamentos.')
+  }
+
+  const agendamentosFiltrados = data
+    .filter(defesa => defesa.alunos?.status === 'Qualificado')
+    .map(mapearDefesaParaAgendamento)
+
+  return agendamentosFiltrados
 }
 
-export const getAgendamentoById = async (
-  id: number
-): Promise<IAgendamento | undefined> => {
-  const agendamentos = await getAgendamentos()
-  return agendamentos.find(a => a.id === id)
+export const getAlunosQualificadosSemDefesa = async (): Promise<IAluno[]> => {
+  const { data: defesas, error: erroDefesas } = await supabase
+    .from('defesas')
+    .select('aluno_id')
+
+  if (erroDefesas) {
+    console.error('Erro ao buscar IDs de alunos em defesas:', erroDefesas.message)
+    return []
+  }
+  const alunosComDefesaIds = defesas.map(d => d.aluno_id)
+
+  const { data: alunos, error: erroAlunos } = await supabase
+    .from('alunos')
+    .select('*')
+    .eq('status', 'Qualificado')
+    .not('id', 'in', `(${alunosComDefesaIds.join(',')})`)
+
+  if (erroAlunos) {
+    console.error('Erro ao buscar alunos qualificados:', erroAlunos.message)
+    return []
+  }
+
+  return alunos
 }
 
 export const createAgendamento = async (
-  agendamento: Omit<IAgendamento, 'id'>
-): Promise<IAgendamento> => {
-  const agendamentos = await getAgendamentos()
-  const newAgendamento: IAgendamento = {
-    ...agendamento,
-    id: Date.now(), // ID simples baseado no timestamp
+  defesa: Omit<IDefesa, 'id' | 'status' | 'local' | 'resumo' | 'banca'>
+): Promise<IDefesa> => {
+  const { data, error } = await supabase
+    .from('defesas')
+    .insert([{ ...defesa, status: 'Agendada' }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Erro ao criar defesa:', error.message)
+    throw new Error('Não foi possível criar o agendamento.')
   }
-  const updatedAgendamentos = [...agendamentos, newAgendamento]
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAgendamentos))
-  return newAgendamento
+
+  return data
 }
 
 export const updateAgendamento = async (
   id: number,
-  updates: Partial<IAgendamento>
-): Promise<IAgendamento | undefined> => {
-  const agendamentos = await getAgendamentos()
-  const index = agendamentos.findIndex(a => a.id === id)
-  if (index === -1) return undefined
+  updates: Partial<IDefesa>
+): Promise<IDefesa> => {
+  const { data, error } = await supabase
+    .from('defesas')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
 
-  const updatedAgendamento = { ...agendamentos[index], ...updates }
-  agendamentos[index] = updatedAgendamento
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(agendamentos))
-  return updatedAgendamento
+  if (error) {
+    console.error(`Erro ao atualizar defesa com ID ${id}:`, error.message)
+    throw new Error('Não foi possível atualizar o agendamento.')
+  }
+
+  return data
 }
 
 export const deleteAgendamento = async (id: number): Promise<boolean> => {
-  const agendamentos = await getAgendamentos()
-  const newAgendamentos = agendamentos.filter(a => a.id !== id)
-  if (agendamentos.length === newAgendamentos.length) {
-    return false // Nenhum item foi removido
+  const { error } = await supabase.from('defesas').delete().eq('id', id)
+
+  if (error) {
+    console.error(`Erro ao excluir defesa com ID ${id}:`, error.message)
+    return false
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newAgendamentos))
+
   return true
 }

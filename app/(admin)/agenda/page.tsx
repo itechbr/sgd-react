@@ -1,4 +1,3 @@
-// app/(admin)/agenda/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -16,18 +15,29 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
+interface IAgendamentoComId extends IAgendamento {
+  aluno_id?: number
+}
+
+interface AgendamentoFormData {
+  titulo: string
+  data: string
+  horario: string
+  aluno_id?: number
+}
+
+
 export default function AgendaPage() {
-  const [agendamentos, setAgendamentos] = useState<IAgendamento[]>([])
+  const [agendamentos, setAgendamentos] = useState<IAgendamentoComId[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const ITEMS_PER_PAGE = 10
 
-  // Estados dos Modais
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingAgendamento, setEditingAgendamento] =
-    useState<IAgendamento | null>(null)
-  const [viewAgendamento, setViewAgendamento] = useState<IAgendamento | null>(
+    useState<IAgendamentoComId | null>(null)
+  const [viewAgendamento, setViewAgendamento] = useState<IAgendamentoComId | null>(
     null
   )
 
@@ -57,21 +67,43 @@ export default function AgendaPage() {
     setIsFormOpen(true)
   }
 
-  const handleEdit = (agendamento: IAgendamento) => {
+  const handleEdit = (agendamento: IAgendamentoComId) => {
     setEditingAgendamento(agendamento)
     setIsFormOpen(true)
   }
 
-  const handleFormSuccess = async () => {
-    setIsFormOpen(false)
-    await carregarAgendamentos()
+  const handleFormSuccess = async (formData: AgendamentoFormData) => {
+    try {
+      if (editingAgendamento) {
+        await AgendamentoService.updateAgendamento(editingAgendamento.id, {
+          titulo: formData.titulo,
+          data: formData.data,
+          horario: formData.horario,
+        })
+      } else {
+        if (!formData.aluno_id) {
+            throw new Error("ID do aluno é necessário para criar um agendamento.")
+        }
+        await AgendamentoService.createAgendamento({
+          titulo: formData.titulo,
+          data: formData.data,
+          horario: formData.horario,
+          aluno_id: formData.aluno_id,
+        })
+      }
+      setIsFormOpen(false)
+      await carregarAgendamentos()
+    } catch (error) {
+      console.error('Erro ao salvar agendamento:', error)
+      alert(`Não foi possível salvar o agendamento. ${error instanceof Error ? error.message : ''}`)
+    }
   }
 
   const handleDelete = async (id: number) => {
     if (confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
         await AgendamentoService.deleteAgendamento(id)
-        await carregarAgendamentos() // Recarrega a lista
+        await carregarAgendamentos()
       } catch (error) {
         console.error('Erro ao excluir agendamento:', error)
         alert('Não foi possível excluir o agendamento.')
@@ -92,6 +124,7 @@ export default function AgendaPage() {
   )
 
   const formatarData = (data: string) => {
+    if (!data) return 'Data inválida';
     const [ano, mes, dia] = data.split('-')
     return `${dia}/${mes}/${ano}`
   }
@@ -180,7 +213,7 @@ export default function AgendaPage() {
                     colSpan={4}
                     className="px-6 py-8 text-center text-[#AAAAAA]"
                   >
-                    Nenhum agendamento encontrado.
+                    Nenhum agendamento encontrado para alunos qualificados.
                   </td>
                 </tr>
               ) : (
