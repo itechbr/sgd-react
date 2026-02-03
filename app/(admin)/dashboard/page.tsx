@@ -1,201 +1,148 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { DashboardService, DashboardStats, SolicitacaoRecente } from '@/app/services/dashboardService'
 import { DefesasChart, StatusChart } from '@/app/components/dashboard/DashboardCharts'
+import { StatCard } from '@/app/components/dashboard/StatCard' // Novo
+import { StatusBadge } from '@/app/components/ui/StatusBadge' // Novo
+import { UserAvatar } from '@/app/components/ui/UserAvatar' // Novo
+import { ChartCard } from '@/app/components/ui/ChartCard' // Novo
 import Link from 'next/link'
-
-// Tipos para os dados do dashboard
-interface DashboardStats {
-  solicitacoes: number
-  defesas: number
-  documentos: number
-  professores: number
-}
-
-interface SolicitacaoRecente {
-  id: number
-  nome: string
-  curso: string
-  data: string
-}
+import { Users, CalendarClock, FileText, GraduationCap } from 'lucide-react'
 
 export default function DashboardPage() {
-  const supabase = createClient()
-  
   const [stats, setStats] = useState<DashboardStats>({
-    solicitacoes: 0,
-    defesas: 0,
-    documentos: 42, // Mockado conforme original
-    professores: 0
+    solicitacoes: 0, defesas: 0, documentos: 0, professores: 0
   })
-  
   const [recentes, setRecentes] = useState<SolicitacaoRecente[]>([])
   const [loading, setLoading] = useState(true)
+  const [chartDataDefesas, setChartDataDefesas] = useState<number[]>([])
+  const [chartDataStatus, setChartDataStatus] = useState<number[]>([])
 
-  // Dados estáticos para os gráficos (Fiéis ao original)
-  const chartDataDefesas = [2, 3, 5, 4, 7, 8, 5, 6, 9, 10, 4, 0]
   const chartLabelsDefesas = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-  
-  const chartDataStatus = [15, 60, 10, 15] // Dados fictícios do original
-  const chartLabelsStatus = ['Aguardando', 'Em Orientação', 'Pendente', 'Concluído']
-  const chartColorsStatus = ['#EF4444', '#3B82F6', '#E6C850', '#22C55E'] // Vermelho, Azul, Dourado, Verde
+  const chartLabelsStatus = ['Ativo', 'Qualificado', 'Defendido', 'Outros']
+  const chartColorsStatus = ['#3B82F6', '#E6C850', '#22C55E', '#EF4444']
 
   useEffect(() => {
-    async function fetchDashboardData() {
+    async function loadData() {
       try {
-        // 1. Contar Professores
-        const { count: profCount } = await supabase.from('professores').select('*', { count: 'exact', head: true })
-        
-        // 2. Contar Defesas Agendadas
-        const { count: defesasCount } = await supabase.from('defesas').select('*', { count: 'exact', head: true }).eq('status', 'Agendada')
-
-        // 3. Contar Solicitações (Alunos ativos sem defesa marcada ou recém criados)
-        // Lógica simplificada: Alunos com status 'Ativo'
-        const { count: solCount } = await supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Ativo')
-
-        // 4. Buscar Solicitações Recentes (Últimos 5 alunos)
-        const { data: ultimosAlunos } = await supabase
-          .from('alunos')
-          .select('id, nome, curso, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5)
-
-        setStats(prev => ({
-          ...prev,
-          professores: profCount || 0,
-          defesas: defesasCount || 0,
-          solicitacoes: solCount || 0
-        }))
-
-        if (ultimosAlunos) {
-          setRecentes(ultimosAlunos.map(a => ({
-            id: a.id,
-            nome: a.nome,
-            curso: a.curso,
-            data: new Date(a.created_at).toLocaleDateString('pt-BR')
-          })))
-        }
-
+        const [statsData, recentData, defesasMes, statusAlunos] = await Promise.all([
+          DashboardService.getStats(),
+          DashboardService.getRecentRequests(),
+          DashboardService.getDefesasPorMes(),
+          DashboardService.getStatusAlunos()
+        ])
+        setStats(statsData); setRecentes(recentData);
+        setChartDataDefesas(defesasMes); setChartDataStatus(statusAlunos);
       } catch (error) {
         console.error('Erro ao carregar dashboard:', error)
       } finally {
         setLoading(false)
       }
     }
-
-    fetchDashboardData()
+    loadData()
   }, [])
 
+  const totalAlunos = chartDataStatus.reduce((acc, val) => acc + val, 0) || 1
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       
-      {/* --- CARDS SUPERIORES --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        {/* Card 1: Solicitações */}
-        <div className="bg-[#1F1F1F] rounded-lg p-6 border-l-4 border-[#C0A040] shadow-md transform transition hover:-translate-y-1 hover:shadow-lg">
-            <h3 className="text-[#E6C850] text-lg font-semibold mb-2">Solicitações Pendentes</h3>
-            <p className="text-[#AAAAAA] text-sm mb-4">Novos pedidos de defesa.</p>
-            <div className="text-4xl font-extrabold text-[#E0E0E0] mb-4">
-                {loading ? '-' : stats.solicitacoes}
-            </div>
-            <Link href="/alunos" className="inline-block bg-[#C0A040] text-black px-3 py-2 rounded font-semibold text-sm hover:bg-[#E6C850] transition-colors">
-                Verificar Agora
-            </Link>
-        </div>
-
-        {/* Card 2: Defesas */}
-        <div className="bg-[#1F1F1F] rounded-lg p-6 border-l-4 border-[#C0A040] shadow-md transform transition hover:-translate-y-1 hover:shadow-lg">
-            <h3 className="text-[#E6C850] text-lg font-semibold mb-2">Defesas Agendadas</h3>
-            <p className="text-[#AAAAAA] text-sm mb-4">Total de defesas agendadas.</p>
-            <div className="text-4xl font-extrabold text-[#E0E0E0] mb-4">
-                {loading ? '-' : stats.defesas}
-            </div>
-            <Link href="/agenda" className="inline-block bg-[#C0A040] text-black px-3 py-2 rounded font-semibold text-sm hover:bg-[#E6C850] transition-colors">
-                Verificar Agora
-            </Link>
-        </div>
-
-        {/* Card 3: Documentos */}
-        <div className="bg-[#1F1F1F] rounded-lg p-6 border-l-4 border-[#C0A040] shadow-md transform transition hover:-translate-y-1 hover:shadow-lg">
-            <h3 className="text-[#E6C850] text-lg font-semibold mb-2">Documentos Gerados</h3>
-            <p className="text-[#AAAAAA] text-sm mb-4">Total de atas e declarações.</p>
-            <div className="text-4xl font-extrabold text-[#E0E0E0] mb-4">
-                {stats.documentos}
-            </div>
-            <Link href="/documentos" className="inline-block bg-[#C0A040] text-black px-3 py-2 rounded font-semibold text-sm hover:bg-[#E6C850] transition-colors">
-                Verificar Agora
-            </Link>
-        </div>
-
-        {/* Card 4: Professores */}
-        <div className="bg-[#1F1F1F] rounded-lg p-6 border-l-4 border-[#C0A040] shadow-md transform transition hover:-translate-y-1 hover:shadow-lg">
-            <h3 className="text-[#E6C850] text-lg font-semibold mb-2">Gerenciar Professores</h3>
-            <p className="text-[#AAAAAA] text-sm mb-4">Total de professores cadastrados.</p>
-            <div className="text-4xl font-extrabold text-[#E0E0E0] mb-4">
-                {loading ? '-' : stats.professores}
-            </div>
-            <Link href="/professores" className="inline-block bg-[#C0A040] text-black px-3 py-2 rounded font-semibold text-sm hover:bg-[#E6C850] transition-colors">
-                Verificar Agora
-            </Link>
+      {/* HEADER */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-bold text-[#E0E0E0]">Visão Geral</h1>
+          <p className="text-[#AAAAAA] text-sm mt-1">Bem-vindo ao painel de controle do SGD.</p>
         </div>
       </div>
 
-      {/* --- GRÁFICO DE BARRAS --- */}
-      <div className="bg-[#1F1F1F] p-6 rounded-lg shadow-lg">
-        <h2 className="text-xl font-semibold mb-4 text-[#E0E0E0]">Volume de Defesas Realizadas por Mês (2025)</h2>
-        <div className="h-80 w-full">
-            <DefesasChart data={chartDataDefesas} labels={chartLabelsDefesas} />
-        </div>
+      {/* CARDS METRICS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Alunos Ativos" value={stats.solicitacoes} label="Em orientação" icon={Users} href="/alunos" loading={loading} />
+        <StatCard title="Defesas Agendadas" value={stats.defesas} label="Próximos 30 dias" icon={CalendarClock} href="/agenda" loading={loading} />
+        <StatCard title="Documentos" value={stats.documentos} label="Gerados em 2025" icon={FileText} href="/documentos" loading={loading} />
+        <StatCard title="Professores" value={stats.professores} label="Corpo docente" icon={GraduationCap} href="/professores" loading={loading} />
       </div>
 
-      {/* --- ROW INFERIOR (GRÁFICO PIZZA + LISTA) --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* GRÁFICOS E LISTAS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Gráfico de Pizza */}
-        <div className="lg:col-span-2 bg-[#1F1F1F] p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-[#E0E0E0]">Status Geral dos Alunos no TCC</h2>
-            <div className="flex flex-col md:flex-row items-center md:space-x-6 h-full">
-                <div className="h-64 w-64 md:h-80 md:w-80 flex-shrink-0">
-                    <StatusChart data={chartDataStatus} labels={chartLabelsStatus} colors={chartColorsStatus} />
+        <div className="lg:col-span-2 space-y-6">
+             {/* Gráfico Barras */}
+             <ChartCard title="Defesas Realizadas">
+                <div className="h-72 w-full">
+                    {!loading && <DefesasChart data={chartDataDefesas} labels={chartLabelsDefesas} />}
                 </div>
-                {/* Legenda Manual */}
-                <div className="mt-4 md:mt-0 space-y-2 text-sm text-[#AAAAAA] flex-1">
-                    {chartLabelsStatus.map((label, i) => (
-                        <div key={i} className="flex items-center">
-                            <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: chartColorsStatus[i] }}></span>
-                            {label} ({chartDataStatus[i]}%)
-                        </div>
-                    ))}
+            </ChartCard>
+
+            {/* Gráfico Pizza */}
+            <ChartCard title="Status dos Alunos">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div className="h-71 aspect-square relative mx-auto">
+                       {!loading && <StatusChart data={chartDataStatus} labels={chartLabelsStatus} colors={chartColorsStatus} />}
+                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-3xl font-bold text-[#E0E0E0]">{totalAlunos}</span>
+                          <span className="text-xs text-[#666] uppercase tracking-wider">Total</span>
+                       </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        {chartLabelsStatus.map((label, i) => (
+                            <div key={i} className="flex items-center justify-between p-1 rounded-lg hover:bg-[#2A2A2A] transition-colors group cursor-default">
+                                <div className="flex items-center gap-3">
+                                    <span className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: chartColorsStatus[i], boxShadow: `0 0 8px ${chartColorsStatus[i]}` }}></span>
+                                    <span className="text-sm text-[#CCCCCC] group-hover:text-white transition-colors">{label}</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="block text-sm text-[15px] font-bold text-[#E0E0E0]">{chartDataStatus[i]}</span>
+                                    <span className="text-[15px] text-[#666]">{((chartDataStatus[i] || 0) / totalAlunos * 100).toFixed(0)}%</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            </ChartCard>
         </div>
 
-        {/* Lista de Recentes */}
-        <div className="lg:col-span-1 bg-[#1F1F1F] p-6 rounded-lg shadow-lg flex flex-col">
-            <h2 className="text-xl font-semibold mb-4 text-[#E0E0E0]">Solicitações Pendentes</h2>
-            
-            <div className="space-y-3 flex-1 overflow-y-auto max-h-96 custom-scrollbar pr-2">
-                {recentes.length === 0 ? (
-                    <p className="text-center text-[#666] py-10">Nenhuma solicitação recente.</p>
+        {/* Lista Recentes */}
+        <ChartCard 
+            title="Novos Alunos" 
+            className="lg:col-span-1 h-full"
+            action={<Link href="/alunos" className="text-xs text-[#C0A040] hover:underline">Ver todos</Link>}
+        >
+            <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar pr-2">
+                {loading ? (
+                   <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-16 bg-[#2A2A2A] rounded-xl animate-pulse"/>)}</div>
+                ) : recentes.length === 0 ? (
+                    <p className="text-center text-[#666] py-10">Nenhuma atividade recente.</p>
                 ) : (
                     recentes.map((sol) => (
-                        <div key={sol.id} className="flex items-center justify-between p-3 bg-[#121212] rounded-lg border border-[#333] hover:border-[#C0A040] transition-colors">
-                            <div className="min-w-0">
-                                <p className="text-sm font-medium text-[#E0E0E0] truncate">{sol.nome}</p>
-                                <p className="text-xs text-[#AAAAAA]">{sol.curso}</p>
+                        <div key={sol.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#2A2A2A] border border-transparent hover:border-[#333] transition-all group">
+                            <UserAvatar name={sol.nome} className="group-hover:border-[#C0A040] transition-colors" />
+                            
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-[#E0E0E0] truncate group-hover:text-[#E6C850] transition-colors">{sol.nome}</p>
+                                <p className="text-xs text-[#888] truncate">{sol.curso}</p>
                             </div>
-                            <span className="text-xs text-[#AAAAAA] whitespace-nowrap ml-2">{sol.data}</span>
+                            
+                            <div className="text-right flex flex-col items-end gap-1">
+                                <span className="text-[10px] text-[#666] whitespace-nowrap">{sol.data}</span>
+                                <StatusBadge status={sol.status} />
+                            </div>
                         </div>
                     ))
                 )}
             </div>
-
-            <Link href="/alunos" className="mt-4 w-full block text-center py-2 text-[#E6C850] border border-[#E6C850] rounded-lg hover:bg-[#E6C850] hover:text-[#1F1F1F] transition-colors text-sm font-medium">
-                Ver Todos
+            
+            {/* LINK PARA GERENCIAR ALUNOS */}
+            <Link 
+                href="/alunos" 
+                className="w-full mt-4 py-3 rounded-xl border border-dashed border-[#333] text-[#666] text-sm hover:border-[#C0A040] hover:text-[#C0A040] hover:bg-[#C0A040]/5 transition-all flex items-center justify-center gap-2"
+            >
+                <Users size={16} /> 
+                Gerenciar Solicitações
             </Link>
-        </div>
+        </ChartCard>
 
       </div>
     </div>
