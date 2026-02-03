@@ -1,12 +1,23 @@
-// app/components/agendamentos/AgendamentoForm.tsx
 'use client'
 
-import { IAgendamento } from '@/app/type'
+import { IAgendamento, IAluno } from '@/app/type'
 import React, { useState, useEffect } from 'react'
+import * => AgendamentoService from '@/app/services/agendamentoService'
+
+interface IAgendamentoComId extends IAgendamento {
+  aluno_id?: number
+}
+
+interface AgendamentoFormData {
+  titulo: string
+  data: string
+  horario: string
+  aluno_id?: number
+}
 
 interface AgendamentoFormProps {
-  agendamento?: IAgendamento | null
-  onSuccess: () => void
+  agendamento?: IAgendamentoComId | null
+  onSuccess: (data: AgendamentoFormData) => void
   onCancel: () => void
 }
 
@@ -15,135 +26,178 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const [aluno, setAluno] = useState('')
+  const [alunoId, setAlunoId] = useState<number | undefined>(undefined)
   const [titulo, setTitulo] = useState('')
   const [data, setData] = useState('')
-  const [hora, setHora] = useState('')
+  const [horario, setHorario] = useState('')
+  const [alunosDisponiveis, setAlunosDisponiveis] = useState<IAluno[]>([])
+  const [loadingAlunos, setLoadingAlunos] = useState(false)
 
   useEffect(() => {
     if (agendamento) {
-      setAluno(agendamento.aluno)
       setTitulo(agendamento.titulo)
       setData(agendamento.data)
-      setHora(agendamento.hora)
+      setHorario(agendamento.hora)
+      setAlunosDisponiveis([])
     } else {
-      // Define valores padrão para um novo formulário
+      const fetchAlunos = async () => {
+        setLoadingAlunos(true)
+        try {
+          const alunos = await AgendamentoService.getAlunosQualificadosSemDefesa()
+          setAlunosDisponiveis(alunos)
+        } catch (error) {
+          console.error("Erro ao buscar alunos qualificados:", error)
+        } finally {
+          setLoadingAlunos(false)
+        }
+      }
+      fetchAlunos()
+      
       const today = new Date().toISOString().split('T')[0]
       setData(today)
-      setHora('09:00')
+      setHorario('09:00')
+      setTitulo('')
     }
   }, [agendamento])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!agendamento && !alunoId) {
+      alert("Por favor, selecione um aluno.")
+      return
+    }
 
-    // Lógica de submissão (será conectada ao service na página principal)
-    // Por enquanto, apenas chama o callback de sucesso
-    onSuccess()
+    onSuccess({
+      titulo,
+      data,
+      horario,
+      aluno_id: agendamento ? undefined : alunoId,
+    })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-4">
-      <div className="flex items-center justify-between pb-3 border-b border-gray-700">
-        <h3 className="text-xl font-semibold text-yellow-400">
-          {agendamento ? 'Editar Agendamento' : 'Novo Agendamento'}
-        </h3>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-gray-400 hover:text-white"
-        >
-          &times;
-        </button>
-      </div>
-
-      <div className="mt-6 space-y-4">
-        <div>
-          <label
-            htmlFor="aluno"
-            className="block mb-2 text-sm font-medium text-gray-400"
-          >
-            Aluno(a)
-          </label>
-          <input
-            type="text"
-            id="aluno"
-            value={aluno}
-            onChange={e => setAluno(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"
-            required
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="titulo"
-            className="block mb-2 text-sm font-medium text-gray-400"
-          >
-            Título da Defesa
-          </label>
-          <input
-            type="text"
-            id="titulo"
-            value={titulo}
-            onChange={e => setTitulo(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"
-            required
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="data"
-              className="block mb-2 text-sm font-medium text-gray-400"
-            >
-              Data
-            </label>
-            <input
-              type="date"
-              id="data"
-              value={data}
-              onChange={e => setData(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="hora"
-              className="block mb-2 text-sm font-medium text-gray-400"
-            >
-              Horário
-            </label>
-            <input
-              type="time"
-              id="hora"
-              value={hora}
-              onChange={e => setHora(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end mt-8 pt-4 border-t border-gray-700">
-        <div className="flex-1 flex justify-end gap-4">
+    <div className="bg-[#1F1F1F] rounded-lg border border-[#333333] shadow-lg text-white">
+      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#333333]">
+          <h3 className="text-xl font-semibold text-[#C0A040]">
+            {agendamento ? 'Editar Agendamento' : 'Novo Agendamento'}
+          </h3>
           <button
             type="button"
             onClick={onCancel}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            className="text-[#AAAAAA] hover:text-white"
           >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="bg-yellow-500 text-black px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-yellow-400 transition-colors"
-          >
-            Salvar
+            &times;
           </button>
         </div>
-      </div>
-    </form>
+
+        <div className="mt-6 space-y-4">
+          <div>
+            <label
+              htmlFor="aluno"
+              className="block mb-2 text-sm font-medium text-[#AAAAAA]"
+            >
+              Aluno(a)
+            </label>
+            {agendamento ? (
+              <input
+                type="text"
+                id="aluno"
+                value={agendamento.aluno}
+                className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5"
+                disabled
+              />
+            ) : (
+              <select
+                id="aluno"
+                value={alunoId || ''}
+                onChange={e => setAlunoId(Number(e.target.value))}
+                className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
+                required
+                disabled={loadingAlunos}
+              >
+                <option value="" disabled>
+                  {loadingAlunos ? 'Carregando alunos...' : 'Selecione um aluno'}
+                </option>
+                {alunosDisponiveis.map(al => (
+                  <option key={al.id} value={al.id}>
+                    {al.nome}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="titulo"
+              className="block mb-2 text-sm font-medium text-[#AAAAAA]"
+            >
+              Título da Defesa
+            </label>
+            <input
+              type="text"
+              id="titulo"
+              value={titulo}
+              onChange={e => setTitulo(e.target.value)}
+              className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="data"
+                className="block mb-2 text-sm font-medium text-[#AAAAAA]"
+              >
+                Data
+              </label>
+              <input
+                type="date"
+                id="data"
+                value={data}
+                onChange={e => setData(e.target.value)}
+                className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="hora"
+                className="block mb-2 text-sm font-medium text-[#AAAAAA]"
+              >
+                Horário
+              </label>
+              <input
+                type="time"
+                id="hora"
+                value={horario}
+                onChange={e => setHorario(e.target.value)}
+                className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end mt-8 pt-4 border-t border-[#333333]">
+          <div className="flex-1 flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="bg-[#C0A040] text-black px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-[#E6C850] transition-colors"
+            >
+              Salvar Agendamento
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   )
 }
 
