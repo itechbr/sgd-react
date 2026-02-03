@@ -6,6 +6,7 @@ import { AgendamentoService } from '@/app/services/agendamentoService'
 
 interface IAgendamentoComId extends IAgendamento {
   aluno_id?: number
+  local?: string
 }
 
 interface AgendamentoFormData {
@@ -13,6 +14,7 @@ interface AgendamentoFormData {
   data: string
   horario: string
   aluno_id?: number
+  local: string
 }
 
 interface AgendamentoFormProps {
@@ -30,6 +32,7 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
   const [titulo, setTitulo] = useState('')
   const [data, setData] = useState('')
   const [horario, setHorario] = useState('')
+  const [local, setLocal] = useState('')
   const [alunosDisponiveis, setAlunosDisponiveis] = useState<IAluno[]>([])
   const [loadingAlunos, setLoadingAlunos] = useState(false)
 
@@ -38,10 +41,9 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
       setTitulo(agendamento.titulo)
       setData(agendamento.data)
       setHorario(agendamento.hora)
-      // Se estamos editando, não precisamos carregar a lista de alunos (geralmente não troca o aluno na edição)
+      setLocal(agendamento.local || '')
       setAlunosDisponiveis([])
     } else {
-      // Se é novo agendamento, busca alunos disponíveis
       const fetchAlunos = async () => {
         setLoadingAlunos(true)
         try {
@@ -59,6 +61,7 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
       setData(today)
       setHorario('09:00')
       setTitulo('')
+      setLocal('')
     }
   }, [agendamento])
 
@@ -73,6 +76,7 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
       titulo,
       data,
       horario,
+      local,
       aluno_id: agendamento ? undefined : alunoId,
     })
   }
@@ -155,6 +159,17 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
                 required
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#AAAAAA]">Local</label>
+            <input
+              type="text"
+              value={local}
+              onChange={e => setLocal(e.target.value)}
+              className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
+              required
+            />
           </div>
         </div>
 

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-// Correção 1: Importar desestruturado, pois o Service não é default
 import { AgendamentoService } from '@/app/services/agendamentoService' 
 import { IAgendamento } from '@/app/type'
 import AgendamentoForm from '@/app/components/agendamentos/AgendamentoForm'
@@ -16,9 +15,9 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
-// Interface estendida para garantir que aluno_id exista
 interface IAgendamentoComId extends IAgendamento {
   aluno_id?: number
+  local?: string
 }
 
 interface AgendamentoFormData {
@@ -26,6 +25,7 @@ interface AgendamentoFormData {
   data: string
   horario: string
   aluno_id?: number
+  local: string
 }
 
 export default function AgendaPage() {
@@ -50,7 +50,6 @@ export default function AgendaPage() {
   const carregarAgendamentos = async () => {
     setLoading(true)
     try {
-      // Correção 2: Usar o método novo .getAll()
       const dados = await AgendamentoService.getAll()
       setAgendamentos(dados)
     } catch (error) {
@@ -74,22 +73,22 @@ export default function AgendaPage() {
   const handleFormSuccess = async (formData: AgendamentoFormData) => {
     try {
       if (editingAgendamento) {
-        // Correção 3: Usar .update()
         await AgendamentoService.update(editingAgendamento.id, {
           titulo: formData.titulo,
           data: formData.data,
-          hora: formData.horario, // Note que a interface espera 'hora', o form envia 'horario'
+          hora: formData.horario,
+          local: formData.local,
         })
       } else {
         if (!formData.aluno_id) {
             throw new Error("ID do aluno é necessário para criar um agendamento.")
         }
-        // Correção 4: Usar .create()
         await AgendamentoService.create({
           titulo: formData.titulo,
           data: formData.data,
           horario: formData.horario,
           aluno_id: formData.aluno_id,
+          local: formData.local,
         })
       }
       setIsFormOpen(false)
@@ -103,7 +102,6 @@ export default function AgendaPage() {
   const handleDelete = async (id: number) => {
     if (confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        // Correção 5: Usar .delete()
         await AgendamentoService.delete(id)
         await carregarAgendamentos()
       } catch (error) {
@@ -113,7 +111,6 @@ export default function AgendaPage() {
     }
   }
 
-  // Lógica de Filtro e Paginação
   const dadosFiltrados = agendamentos.filter(
     ag =>
       ag.aluno.toLowerCase().includes(busca.toLowerCase()) ||
@@ -200,7 +197,7 @@ export default function AgendaPage() {
               ) : paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-[#AAAAAA]">
-                    Nenhum agendamento encontrado.
+                    Nenhum agendamento encontrado para alunos qualificados.
                   </td>
                 </tr>
               ) : (

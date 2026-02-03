@@ -4,7 +4,6 @@ import { IAgendamento } from '@/app/type'
 const supabase = createClient()
 
 export const AgendamentoService = {
-  // Busca todos os agendamentos (Defesas com status 'Agendada')
   async getAll(): Promise<IAgendamento[]> {
     const { data, error } = await supabase
       .from('defesas')
@@ -13,6 +12,7 @@ export const AgendamentoService = {
         titulo,
         data,
         horario,
+        local,
         alunos (
           id,
           nome
@@ -26,24 +26,22 @@ export const AgendamentoService = {
       return []
     }
 
-    // Mapeia o retorno do Supabase para o tipo IAgendamento da interface
     return data.map((item: any) => ({
       id: item.id,
       aluno: item.alunos?.nome || 'Aluno Desconhecido',
       aluno_id: item.alunos?.id,
       titulo: item.titulo,
-      data: item.data, // formato YYYY-MM-DD
-      hora: item.horario // formato HH:MM:SS ou HH:MM
+      data: item.data,
+      hora: item.horario,
+      local: item.local,
     }))
   },
 
-  // Busca alunos que podem agendar defesa (Ativos e sem defesa marcada)
   async getAlunosQualificadosSemDefesa() {
-    // 1. Busca todos os alunos ativos
     const { data: alunos, error } = await supabase
       .from('alunos')
       .select('id, nome, status')
-      .in('status', ['Ativo', 'Qualificado']) // Aceita Ativo ou Qualificado
+      .in('status', ['Ativo', 'Qualificado'])
       .order('nome')
 
     if (error) {
@@ -51,18 +49,16 @@ export const AgendamentoService = {
       return []
     }
 
-    // 2. Busca IDs de alunos que JÁ têm defesa agendada ou realizada
     const { data: defesas } = await supabase
       .from('defesas')
       .select('aluno_id')
     
     const alunosComDefesa = new Set(defesas?.map(d => d.aluno_id))
 
-    // 3. Filtra: Retorna apenas quem NÃO está na lista de defesas
     return alunos.filter(a => !alunosComDefesa.has(a.id))
   },
 
-  async create(agendamento: { titulo: string, data: string, horario: string, aluno_id: number }) {
+  async create(agendamento: { titulo: string, data: string, horario: string, aluno_id: number, local: string }) {
     const { data, error } = await supabase
       .from('defesas')
       .insert([{
@@ -70,7 +66,8 @@ export const AgendamentoService = {
         data: agendamento.data,
         horario: agendamento.horario,
         aluno_id: agendamento.aluno_id,
-        status: 'Agendada' // Padrão ao criar
+        local: agendamento.local,
+        status: 'Agendada',
       }])
       .select()
       .single()
@@ -79,12 +76,12 @@ export const AgendamentoService = {
     return data
   },
 
-  async update(id: number, updates: Partial<IAgendamento>) {
-    // Precisamos traduzir os campos da interface para o banco
+  async update(id: number, updates: Partial<IAgendamento & { local?: string }>) {
     const dbUpdates: any = {}
     if (updates.titulo) dbUpdates.titulo = updates.titulo
     if (updates.data) dbUpdates.data = updates.data
     if (updates.hora) dbUpdates.horario = updates.hora
+    if (updates.local) dbUpdates.local = updates.local
     
     const { data, error } = await supabase
       .from('defesas')
