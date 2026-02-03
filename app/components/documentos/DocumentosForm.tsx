@@ -96,9 +96,11 @@ export default function DocumentosForm() {
         const opt = {
           margin: 0,
           filename: `defesa_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
+          // AQUI ESTAVA O ERRO: Adicionado 'as const' para forçar o tipo literal 'jpeg'
+          image: { type: 'jpeg' as const, quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          // Adicionei 'unit' e 'format' como tipos literais também por segurança
+          jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
         };
 
         await html2pdf().set(opt).from(element).save();
