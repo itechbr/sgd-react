@@ -2,20 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { getProfile } from "../../services/profileService";
-import ActivityHistory from "../../components/perfil/ActivityHistory";
 import EditProfileModal from "../../components/perfil/EditProfileModal";
-
-export type Profile = {
-  name_full: string;
-  role: string;
-  phone: string;
-  email: string;
-};
+import ActivityHistory from "../../components/perfil/ActivityHistory";
+import { getActivityHistory } from "../../services/profileService";
+import { Activity } from "../../type/activity";
+import { Profile } from "@/app/type/perfil";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
 
   useEffect(() => {
     async function loadProfile() {
@@ -32,6 +31,21 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const data = await getActivityHistory();
+        setActivities(data);
+      } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+      } finally {
+        setLoadingActivities(false);
+      }
+    }
+
+    loadHistory();
+  }, []);
+
   if (loading) {
     return <p className="text-center text-[#888]">Carregando perfil...</p>;
   }
@@ -42,10 +56,9 @@ export default function ProfilePage() {
 
   return (
     <section className="p-8 max-w-4xl mx-auto space-y-10">
-      {/* Card do Perfil */}
       <div className="bg-[#1F1F1F] p-8 rounded-xl border border-[#333333]">
         <h2 className="text-2xl font-semibold text-[#E6C850]">
-          {profile.name_full}
+          {profile.full_name}
         </h2>
 
         <p className="text-[#AAAAAA]">{profile.role}</p>
@@ -65,16 +78,23 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Modal */}
       <EditProfileModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         profile={profile}
         onProfileUpdated={setProfile}
       />
+      
+      <ActivityHistory
+        activities={activities}
+        loading={loadingActivities}
+      />
 
-      {/* Histórico */}
-      <ActivityHistory />
+
     </section>
   );
 }
+
+
+
+

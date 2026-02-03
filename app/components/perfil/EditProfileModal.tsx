@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { updateProfile } from "../../services/profileService";
-import { Profile } from "@/app/(admin)/perfil/page";
+import { Profile } from "@/app/type/perfil";
 
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   profile: Profile;
-  onProfileUpdated: React.Dispatch<
-    React.SetStateAction<Profile | null>
-  >;
+  onProfileUpdated: React.Dispatch<React.SetStateAction<Profile | null>>;
 }
 
 export default function EditProfileModal({
@@ -19,15 +17,15 @@ export default function EditProfileModal({
   profile,
   onProfileUpdated,
 }: EditProfileModalProps) {
-  const [nameFull, setNameFull] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (profile) {
-      setNameFull(profile.name_full);
-      setPhone(profile.phone);
-    }
+    setFullName(profile.full_name);
+    setRole(profile.role);
+    setPhone(profile.phone);
   }, [profile]);
 
   if (!isOpen) return null;
@@ -37,20 +35,21 @@ export default function EditProfileModal({
       setLoading(true);
 
       await updateProfile({
-        name_full: nameFull,
+        full_name: fullName,
+        role,
         phone,
       });
 
-      
-      onProfileUpdated((prev) => {
-        if (!prev) return prev;
-
-        return {
-          ...prev,
-          name_full: nameFull,
-          phone,
-        };
-      });
+      onProfileUpdated((prev) =>
+        prev
+          ? {
+              ...prev,
+              full_name: fullName,
+              role,
+              phone,
+            }
+          : prev
+      );
 
       onClose();
     } catch (error) {
@@ -68,30 +67,36 @@ export default function EditProfileModal({
         </h2>
 
         <div className="mb-4">
-          <label className="mb-1 block text-sm">Nome completo</label>
+          <label className="block text-sm mb-1">Nome completo</label>
           <input
-            type="text"
-            value={nameFull}
-            onChange={(e) => setNameFull(e.target.value)}
-            className="w-full rounded-md border border-[#333333] bg-transparent px-3 py-2 text-sm"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full rounded-md border border-[#333333] bg-transparent px-3 py-2"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm mb-1">Cargo</label>
+          <input
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full rounded-md border border-[#333333] bg-transparent px-3 py-2"
           />
         </div>
 
         <div className="mb-6">
-          <label className="mb-1 block text-sm">Telefone</label>
+          <label className="block text-sm mb-1">Telefone</label>
           <input
-            type="text"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full rounded-md border border-[#333333] bg-transparent px-3 py-2 text-sm"
+            className="w-full rounded-md border border-[#333333] bg-transparent px-3 py-2"
           />
         </div>
 
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
-            disabled={loading}
-            className="rounded-md border border-[#333333] px-4 py-2 text-sm"
+            className="border border-[#333333] px-4 py-2 rounded-md"
           >
             Cancelar
           </button>
@@ -99,7 +104,7 @@ export default function EditProfileModal({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="rounded-md bg-[#E6C850] px-4 py-2 text-sm font-medium text-black disabled:opacity-60"
+            className="bg-[#E6C850] px-4 py-2 rounded-md text-black disabled:opacity-60"
           >
             {loading ? "Salvando..." : "Salvar"}
           </button>
