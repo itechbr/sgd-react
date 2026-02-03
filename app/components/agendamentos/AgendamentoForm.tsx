@@ -4,11 +4,13 @@ import { IAgendamento, IAluno } from '@/app/type'
 import React, { useState, useEffect } from 'react'
 import { AgendamentoService } from '@/app/services/agendamentoService'
 
+// Interface para agendamentos que podem vir com campos adicionais do banco
 interface IAgendamentoComId extends IAgendamento {
   aluno_id?: number
   local?: string
 }
 
+// Interface para os dados que o formulário envia no sucesso
 interface AgendamentoFormData {
   titulo: string
   data: string
@@ -33,7 +35,8 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
   const [data, setData] = useState('')
   const [horario, setHorario] = useState('')
   const [local, setLocal] = useState('')
-  const [alunosDisponiveis, setAlunosDisponiveis] = useState<IAluno[]>([])
+  // Ajuste aqui para evitar erro de tipo com o retorno do serviço
+  const [alunosDisponiveis, setAlunosDisponiveis] = useState<Pick<IAluno, 'id' | 'nome' | 'status'>[]>([])
   const [loadingAlunos, setLoadingAlunos] = useState(false)
 
   useEffect(() => {
