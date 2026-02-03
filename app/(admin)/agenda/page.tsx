@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import * as AgendamentoService from '@/app/services/agendamentoService'
+// Correção 1: Importar desestruturado, pois o Service não é default
+import { AgendamentoService } from '@/app/services/agendamentoService' 
 import { IAgendamento } from '@/app/type'
 import AgendamentoForm from '@/app/components/agendamentos/AgendamentoForm'
 import AgendamentoDetails from '@/app/components/agendamentos/AgendamentoDetails'
@@ -15,6 +16,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react'
 
+// Interface estendida para garantir que aluno_id exista
 interface IAgendamentoComId extends IAgendamento {
   aluno_id?: number
 }
@@ -26,7 +28,6 @@ interface AgendamentoFormData {
   aluno_id?: number
 }
 
-
 export default function AgendaPage() {
   const [agendamentos, setAgendamentos] = useState<IAgendamentoComId[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,11 +36,8 @@ export default function AgendaPage() {
   const ITEMS_PER_PAGE = 10
 
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingAgendamento, setEditingAgendamento] =
-    useState<IAgendamentoComId | null>(null)
-  const [viewAgendamento, setViewAgendamento] = useState<IAgendamentoComId | null>(
-    null
-  )
+  const [editingAgendamento, setEditingAgendamento] = useState<IAgendamentoComId | null>(null)
+  const [viewAgendamento, setViewAgendamento] = useState<IAgendamentoComId | null>(null)
 
   useEffect(() => {
     carregarAgendamentos()
@@ -52,7 +50,8 @@ export default function AgendaPage() {
   const carregarAgendamentos = async () => {
     setLoading(true)
     try {
-      const dados = await AgendamentoService.getAgendamentos()
+      // Correção 2: Usar o método novo .getAll()
+      const dados = await AgendamentoService.getAll()
       setAgendamentos(dados)
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error)
@@ -75,16 +74,18 @@ export default function AgendaPage() {
   const handleFormSuccess = async (formData: AgendamentoFormData) => {
     try {
       if (editingAgendamento) {
-        await AgendamentoService.updateAgendamento(editingAgendamento.id, {
+        // Correção 3: Usar .update()
+        await AgendamentoService.update(editingAgendamento.id, {
           titulo: formData.titulo,
           data: formData.data,
-          horario: formData.horario,
+          hora: formData.horario, // Note que a interface espera 'hora', o form envia 'horario'
         })
       } else {
         if (!formData.aluno_id) {
             throw new Error("ID do aluno é necessário para criar um agendamento.")
         }
-        await AgendamentoService.createAgendamento({
+        // Correção 4: Usar .create()
+        await AgendamentoService.create({
           titulo: formData.titulo,
           data: formData.data,
           horario: formData.horario,
@@ -102,7 +103,8 @@ export default function AgendaPage() {
   const handleDelete = async (id: number) => {
     if (confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        await AgendamentoService.deleteAgendamento(id)
+        // Correção 5: Usar .delete()
+        await AgendamentoService.delete(id)
         await carregarAgendamentos()
       } catch (error) {
         console.error('Erro ao excluir agendamento:', error)
@@ -111,6 +113,7 @@ export default function AgendaPage() {
     }
   }
 
+  // Lógica de Filtro e Paginação
   const dadosFiltrados = agendamentos.filter(
     ag =>
       ag.aluno.toLowerCase().includes(busca.toLowerCase()) ||
@@ -183,79 +186,45 @@ export default function AgendaPage() {
           <table className="w-full min-w-max">
             <thead className="bg-black/20">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">
-                  Aluno
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">
-                  Título
-                </th>
-                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">
-                  Data & Hora
-                </th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-[#C0A040]">
-                  Ações
-                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Aluno</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-[#C0A040]">Título</th>
+                <th className="px-6 py-3 text-center text-sm font-semibold text-[#C0A040]">Data & Hora</th>
+                <th className="px-6 py-3 text-right text-sm font-semibold text-[#C0A040]">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#333333]">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-8 text-center text-[#AAAAAA]"
-                  >
-                    Carregando...
-                  </td>
+                  <td colSpan={4} className="px-6 py-8 text-center text-[#AAAAAA]">Carregando...</td>
                 </tr>
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-8 text-center text-[#AAAAAA]"
-                  >
-                    Nenhum agendamento encontrado para alunos qualificados.
+                  <td colSpan={4} className="px-6 py-8 text-center text-[#AAAAAA]">
+                    Nenhum agendamento encontrado.
                   </td>
                 </tr>
               ) : (
                 paginatedData.map(ag => (
                   <tr key={ag.id} className="hover:bg-[#1A1A1A]">
-                    <td className="px-6 py-4 text-white font-medium">
-                      {ag.aluno}
-                    </td>
+                    <td className="px-6 py-4 text-white font-medium">{ag.aluno}</td>
                     <td className="px-6 py-4 text-[#E0E0E0]">{ag.titulo}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Calendar size={14} className="text-[#AAAAAA]" />
-                        <span className="text-white">
-                          {formatarData(ag.data)}
-                        </span>
+                        <span className="text-white">{formatarData(ag.data)}</span>
                         <span className="text-[#555]">às</span>
-                        <span className="font-semibold text-[#C0A040]">
-                          {ag.hora}
-                        </span>
+                        <span className="font-semibold text-[#C0A040]">{ag.hora}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-3">
-                        <button
-                          onClick={() => setViewAgendamento(ag)}
-                          className="text-[#AAAAAA] hover:text-blue-400 transition"
-                          title="Ver Detalhes"
-                        >
+                        <button onClick={() => setViewAgendamento(ag)} className="text-[#AAAAAA] hover:text-blue-400" title="Ver Detalhes">
                           <MoreHorizontal size={20} />
                         </button>
-                        <button
-                          onClick={() => handleEdit(ag)}
-                          className="text-[#AAAAAA] hover:text-[#C0A040] transition"
-                          title="Editar"
-                        >
+                        <button onClick={() => handleEdit(ag)} className="text-[#AAAAAA] hover:text-[#C0A040]" title="Editar">
                           <Edit size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(ag.id)}
-                          className="text-[#AAAAAA] hover:text-red-500 transition"
-                          title="Excluir"
-                        >
+                        <button onClick={() => handleDelete(ag.id)} className="text-[#AAAAAA] hover:text-red-500" title="Excluir">
                           <Trash2 size={18} />
                         </button>
                       </div>

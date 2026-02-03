@@ -2,7 +2,7 @@
 
 import { IAgendamento, IAluno } from '@/app/type'
 import React, { useState, useEffect } from 'react'
-import * => AgendamentoService from '@/app/services/agendamentoService'
+import { AgendamentoService } from '@/app/services/agendamentoService'
 
 interface IAgendamentoComId extends IAgendamento {
   aluno_id?: number
@@ -38,8 +38,10 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
       setTitulo(agendamento.titulo)
       setData(agendamento.data)
       setHorario(agendamento.hora)
+      // Se estamos editando, não precisamos carregar a lista de alunos (geralmente não troca o aluno na edição)
       setAlunosDisponiveis([])
     } else {
+      // Se é novo agendamento, busca alunos disponíveis
       const fetchAlunos = async () => {
         setLoadingAlunos(true)
         try {
@@ -93,23 +95,16 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
 
         <div className="mt-6 space-y-4">
           <div>
-            <label
-              htmlFor="aluno"
-              className="block mb-2 text-sm font-medium text-[#AAAAAA]"
-            >
-              Aluno(a)
-            </label>
+            <label className="block mb-2 text-sm font-medium text-[#AAAAAA]">Aluno(a)</label>
             {agendamento ? (
               <input
                 type="text"
-                id="aluno"
                 value={agendamento.aluno}
-                className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5"
+                className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 opacity-60 cursor-not-allowed"
                 disabled
               />
             ) : (
               <select
-                id="aluno"
                 value={alunoId || ''}
                 onChange={e => setAlunoId(Number(e.target.value))}
                 className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
@@ -127,33 +122,23 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
               </select>
             )}
           </div>
+          
           <div>
-            <label
-              htmlFor="titulo"
-              className="block mb-2 text-sm font-medium text-[#AAAAAA]"
-            >
-              Título da Defesa
-            </label>
+            <label className="block mb-2 text-sm font-medium text-[#AAAAAA]">Título da Defesa</label>
             <input
               type="text"
-              id="titulo"
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
               required
             />
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="data"
-                className="block mb-2 text-sm font-medium text-[#AAAAAA]"
-              >
-                Data
-              </label>
+              <label className="block mb-2 text-sm font-medium text-[#AAAAAA]">Data</label>
               <input
                 type="date"
-                id="data"
                 value={data}
                 onChange={e => setData(e.target.value)}
                 className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
@@ -161,15 +146,9 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
               />
             </div>
             <div>
-              <label
-                htmlFor="hora"
-                className="block mb-2 text-sm font-medium text-[#AAAAAA]"
-              >
-                Horário
-              </label>
+              <label className="block mb-2 text-sm font-medium text-[#AAAAAA]">Horário</label>
               <input
                 type="time"
-                id="hora"
                 value={horario}
                 onChange={e => setHorario(e.target.value)}
                 className="w-full bg-[#121212] border border-[#333333] text-[#E0E0E0] rounded-lg p-2.5 focus:outline-none focus:border-[#C0A040]"
