@@ -109,9 +109,20 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
     setError('')
 
     try {
-      // Adicionei validação de Email também para segurança
+      // 1. Validação de Campos Obrigatórios
       if (!alunoData.nome || !alunoData.matricula || !alunoData.email || !alunoData.orientador_id) {
         throw new Error('Preencha os campos obrigatórios do Aluno (Nome, Matrícula, E-mail, Orientador).')
+      }
+
+      // 2. Validação Regexp (Segurança Extra no Submit)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(alunoData.email)) {
+        throw new Error('O e-mail informado é inválido.')
+      }
+
+      const matriculaRegex = /^\d+$/
+      if (!matriculaRegex.test(alunoData.matricula)) {
+        throw new Error('A matrícula deve conter apenas números.')
       }
 
       const bancaArray = bancaInput.split(',').map(s => s.trim()).filter(s => s !== '')
@@ -120,8 +131,6 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
       if (alunoToEdit?.id) {
         await AlunoService.update(alunoToEdit.id, alunoData, defesaFinal)
       } else {
-        // CORREÇÃO AQUI: Casting 'as IAluno' para satisfazer o TypeScript
-        // Já garantimos no if acima que os campos obrigatórios existem
         await AlunoService.create(alunoData as IAluno, defesaFinal)
       }
 
@@ -188,16 +197,22 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
                         onChange={handleAlunoChange} 
                         required 
                     />
+                    {/* Validação: Apenas números */}
                     <FormInput 
                         label="Matrícula" 
                         name="matricula" 
                         value={alunoData.matricula} 
                         onChange={handleAlunoChange} 
                         required 
+                        validation={{
+                          regex: /^\d+$/,
+                          message: 'A matrícula deve conter apenas números.'
+                        }}
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Validação: Formato de Email */}
                     <FormInput 
                         label="E-mail" 
                         name="email" 
@@ -205,6 +220,10 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
                         value={alunoData.email} 
                         onChange={handleAlunoChange} 
                         required 
+                        validation={{
+                          regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: 'Insira um e-mail válido.'
+                        }}
                     />
                     <FormSelect 
                         label="Orientador"
@@ -266,7 +285,6 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
                     placeholder="Título provisório ou final..."
                 />
                 
-                {/* Textarea customizado */}
                 <div className="w-full mb-4">
                     <label className="block text-sm font-medium text-[#AAAAAA] mb-1.5">Resumo / Abstract</label>
                     <textarea 

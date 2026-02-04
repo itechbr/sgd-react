@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useNotification } from "@/app/providers"; 
 import BancaMember from "./BancaMember";
 import SuccessModal from "./SuccessModal";
 import DocumentoTemplate from "./DocumentoTemplate"; 
-import { FormInput } from "@/app/components/ui/FormInput";
-import { ArrowRight, ArrowLeft, FileText, CheckCircle, Save, ClipboardCheck, Calendar, Download } from "lucide-react";
+// IMPORTANTE: Importamos as validações centralizadas aqui
+import { FormInput, INPUT_VALIDATIONS } from "@/app/components/ui/FormInput";
+import { ArrowRight, ArrowLeft, FileText, CheckCircle, ClipboardCheck, Calendar, Download } from "lucide-react";
 
 // Definição das Abas
 type Tab = "candidato" | "banca" | "notas" | "defesa";
 
 export default function DocumentosForm() {
+  const { notify } = useNotification(); 
   const [activeTab, setActiveTab] = useState<Tab>("candidato");
-  const [membros, setMembros] = useState<number[]>([0]); // Inicia com 1 membro (Orientador)
+  const [membros, setMembros] = useState<number[]>([0]); 
   const [modalAberto, setModalAberto] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Estado para armazenar os dados estruturados para o PDF
   const [pdfData, setPdfData] = useState<any>(null);
 
   function adicionarMembro() {
@@ -27,17 +29,57 @@ export default function DocumentosForm() {
     setMembros((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // Função Principal: Captura dados, monta o objeto e chama o gerador
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsGenerating(true);
-
+    
     const formData = new FormData(e.currentTarget);
     const rawData = Object.fromEntries(formData.entries());
 
-    console.log("Dados capturados:", rawData); // Para debug
+    // --- 1. VALIDAÇÃO DO CANDIDATO (Usando INPUT_VALIDATIONS) ---
+    if (!INPUT_VALIDATIONS.email.regex.test(rawData.email as string)) {
+        notify("Candidato: O e-mail informado é inválido.", "error");
+        setActiveTab("candidato");
+        return;
+    }
 
-    // Estruturando dados para o Template
+    // Matrícula deve ser numérica
+    if (!INPUT_VALIDATIONS.numeric.regex.test(rawData.matricula as string)) {
+        notify("Candidato: A matrícula deve conter apenas números.", "error");
+        setActiveTab("candidato");
+        return;
+    }
+
+    // Telefone (se informado) deve seguir o padrão (XX) XXXXX-XXXX
+    if (rawData.telefone && !INPUT_VALIDATIONS.phone.regex.test(rawData.telefone as string)) {
+        notify("Candidato: O telefone é inválido.", "error");
+        setActiveTab("candidato");
+        return;
+    }
+
+    // --- 2. VALIDAÇÃO DA BANCA ---
+    for (const idx of membros) {
+        const nome = rawData[`membro_${idx}_nome`];
+        const cpf = rawData[`membro_${idx}_cpf`] as string; // Isso virá limpo ou formatado dependendo da máscara
+        const email = rawData[`membro_${idx}_email`] as string;
+
+        if (nome) {
+             // Validamos se é numérico (pois definimos mask="numeric" no BancaMember para aceitar Matrícula ou CPF puro)
+             if (cpf && !INPUT_VALIDATIONS.numeric.regex.test(cpf.replace(/\D/g, ''))) {
+                notify(`Membro ${idx + 1} (${nome}): Matrícula/CPF inválido.`, "error");
+                setActiveTab("banca");
+                return;
+            }
+            if (email && !INPUT_VALIDATIONS.email.regex.test(email)) {
+                notify(`Membro ${idx + 1} (${nome}): E-mail inválido.`, "error");
+                setActiveTab("banca");
+                return;
+            }
+        }
+    }
+
+    setIsGenerating(true);
+    notify("Iniciando geração do documento...", "info");
+
     const structuredData = {
       candidato: {
         nome: rawData.nome,
@@ -73,22 +115,19 @@ export default function DocumentosForm() {
 
     setPdfData(structuredData);
 
-    // Pequeno delay para garantir que o React renderizou o componente invisível com os dados novos
     setTimeout(() => {
         gerarPDF();
-    }, 500); // Aumentei um pouco o delay para segurança
+    }, 500); 
   }
 
   const gerarPDF = async () => {
     if (typeof window !== "undefined") {
       try {
-        // Importação dinâmica
         const html2pdf = (await import("html2pdf.js")).default;
-
         const element = document.getElementById("template-pdf-print");
         
         if (!element) {
-            alert("Erro: Template não encontrado.");
+            notify("Erro: Template não encontrado.", "error");
             setIsGenerating(false);
             return;
         }
@@ -96,26 +135,25 @@ export default function DocumentosForm() {
         const opt = {
           margin: 0,
           filename: `defesa_${new Date().toISOString().split('T')[0]}.pdf`,
-          // AQUI ESTAVA O ERRO: Adicionado 'as const' para forçar o tipo literal 'jpeg'
           image: { type: 'jpeg' as const, quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
-          // Adicionei 'unit' e 'format' como tipos literais também por segurança
           jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
         };
 
         await html2pdf().set(opt).from(element).save();
+        
         setModalAberto(true); 
+        notify("PDF gerado com sucesso!", "success");
 
       } catch (err) {
         console.error("Erro ao gerar PDF", err);
-        alert("Erro ao gerar PDF. Verifique o console.");
+        notify("Falha ao gerar o arquivo PDF.", "error");
       } finally {
         setIsGenerating(false);
       }
     }
   };
 
-  // Componente de Botão da Aba
   const TabButton = ({ id, label, current, icon: Icon }: { id: Tab; label: string; current: Tab; icon: any }) => (
     <button
       type="button"
@@ -135,13 +173,10 @@ export default function DocumentosForm() {
     <>
       <div className="w-full max-w-5xl mx-auto py-6">
         
-        {/* ÁREA INVISÍVEL ONDE O PDF É RENDERIZADO */}
-        {/* Usamos display: none ou position absolute fora da tela para esconder */}
         <div style={{ position: "absolute", top: "-9999px", left: "-9999px" }}>
             {pdfData && <DocumentoTemplate id="template-pdf-print" data={pdfData} />}
         </div>
 
-        {/* Form Container */}
         <div className="bg-[#1F1F1F] rounded-lg border border-[#333333] shadow-2xl overflow-hidden flex flex-col">
           
           <div className="p-6 border-b border-[#333333] bg-[#1A1A1A]">
@@ -165,13 +200,36 @@ export default function DocumentosForm() {
 
             <div className="p-8 min-h-[400px]">
               
-              {/* ABA 1: CANDIDATO - Usando display hidden ao invés de remover do DOM */}
+              {/* ABA 1: CANDIDATO */}
               <div className={activeTab === "candidato" ? "block animate-in fade-in slide-in-from-left-2 duration-300 space-y-6" : "hidden"}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <FormInput name="nome" label="Nome Completo" required placeholder="Ex: João da Silva" />
-                    <FormInput name="matricula" label="Matrícula" required placeholder="Ex: 2021100..." />
-                    <FormInput name="email" label="E-mail Institucional" type="email" required />
-                    <FormInput name="telefone" label="Telefone" placeholder="(83) 99999-9999" />
+                    
+                    {/* Validação Numérica Centralizada */}
+                    <FormInput 
+                        name="matricula" 
+                        label="Matrícula" 
+                        required 
+                        placeholder="Ex: 2021100..."
+                        mask="numeric"
+                    />
+                    
+                    {/* Validação de Email Centralizada */}
+                    <FormInput 
+                        name="email" 
+                        label="E-mail Institucional" 
+                        type="email" 
+                        required 
+                        validation={INPUT_VALIDATIONS.email}
+                    />
+                    
+                    {/* Máscara de Telefone Centralizada */}
+                    <FormInput 
+                        name="telefone" 
+                        label="Telefone" 
+                        placeholder="(83) 99999-9999" 
+                        mask="phone"
+                    />
                     
                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
                        <FormInput name="linhaPesquisa" label="Linha de Pesquisa" placeholder="Se houver" />

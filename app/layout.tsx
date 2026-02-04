@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import { Providers } from "./providers"; // Importando o novo Provider
 import "./globals.css";
 
-// Configuração da fonte Poppins (Substituindo o link do Google Fonts do legado)
+// Configuração da fonte Poppins
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "600", "700"], // Pesos usados no CSS legado
+  weight: ["300", "400", "600", "700"],
   variable: "--font-poppins",
 });
 
@@ -22,7 +23,10 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body className={`${poppins.variable} font-poppins bg-[#121212] text-[#E0E0E0] antialiased`}>
-        {children}
+        {/* Envolvendo a aplicação com o Provider Global */}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
