@@ -1,7 +1,7 @@
 "use client";
 
-import { FormInput } from "@/app/components/ui/FormInput";
-import { FormSelect } from "@/app/components/ui/FormSelect"; // <--- Importando o componente existente
+import { FormInput, INPUT_VALIDATIONS } from "@/app/components/ui/FormInput";
+import { FormSelect } from "@/app/components/ui/FormSelect";
 
 interface BancaMemberProps {
   index: number;
@@ -32,12 +32,23 @@ export default function BancaMember({ index, isOrientador = false, onRemove }: B
         
         {/* Nome ocupa 2 colunas */}
         <div className="lg:col-span-2">
-            <FormInput name={`membro_${index}_nome`} label="Nome Completo" placeholder="Nome do Professor" required />
+            <FormInput 
+              name={`membro_${index}_nome`} 
+              label="Nome Completo" 
+              placeholder="Nome do Professor" 
+              required 
+            />
         </div>
         
-        <FormInput name={`membro_${index}_cpf`} label="Matrícula / CPF" placeholder="Apenas números" required />
+        {/* Híbrido: Aceita Matrícula ou CPF (apenas números) */}
+        <FormInput 
+            name={`membro_${index}_cpf`} 
+            label="Matrícula / CPF" 
+            placeholder="Apenas números" 
+            required 
+            mask="numeric"
+        />
         
-        {/* Substituindo Select Nativo por FormSelect */}
         <FormSelect 
             name={`membro_${index}_tipo`} 
             label="Tipo de Membro"
@@ -47,12 +58,23 @@ export default function BancaMember({ index, isOrientador = false, onRemove }: B
         </FormSelect>
 
         <div className="lg:col-span-2">
-            <FormInput name={`membro_${index}_email`} label="E-mail" type="email" />
+            {/* E-mail usando validação centralizada */}
+            <FormInput 
+                name={`membro_${index}_email`} 
+                label="E-mail" 
+                type="email" 
+                validation={INPUT_VALIDATIONS.email}
+            />
         </div>
 
-        <FormInput name={`membro_${index}_telefone`} label="Telefone" />
+        {/* Uso de máscara de telefone */}
+        <FormInput 
+            name={`membro_${index}_telefone`} 
+            label="Telefone" 
+            placeholder="(83) 99999-9999"
+            mask="phone"
+        />
         
-        {/* Substituindo Select Nativo por FormSelect */}
         <FormSelect 
             name={`membro_${index}_participacao`} 
             label="Participação"
