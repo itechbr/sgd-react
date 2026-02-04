@@ -1,4 +1,3 @@
-// app/components/agendamentos/AgendamentoDetails.tsx
 'use client'
 
 import { IAgendamento } from '@/app/type/index'

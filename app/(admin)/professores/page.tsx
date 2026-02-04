@@ -69,8 +69,6 @@ export default function ProfessoresPage() {
         if (professor.id) {
             await ProfessorService.delete(professor.id)
             setProfessores(prev => prev.filter(p => p.id !== professor.id))
-            
-            // Ajuste de paginação
             const totalItems = professores.length - 1
             const maxPages = Math.ceil(totalItems / ITEMS_PER_PAGE)
             if (currentPage > maxPages && maxPages > 0) setCurrentPage(maxPages)

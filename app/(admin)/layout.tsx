@@ -12,4 +12,3 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     </DashboardShell>
   )
 }
-//atualizando arquivo 

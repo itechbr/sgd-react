@@ -244,8 +244,6 @@ export default function SecretariosPage() {
           columns={columns}
           data={paginatedData}
           isLoading={loading}
-          // Note que não passei onEdit/onDelete aqui porque criei uma coluna customizada de "Ações"
-          // que inclui o botão de chave (reset password) além de editar e excluir.
         />
 
         {/* Paginação */}
