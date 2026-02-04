@@ -136,7 +136,7 @@ export default function DashboardPage() {
             
             {/* LINK PARA GERENCIAR ALUNOS */}
             <Link 
-                href="/alunos" 
+                href="/solicitacoes" 
                 className="w-full mt-4 py-3 rounded-xl border border-dashed border-[#333] text-[#666] text-sm hover:border-[#C0A040] hover:text-[#C0A040] hover:bg-[#C0A040]/5 transition-all flex items-center justify-center gap-2"
             >
                 <Users size={16} /> 
