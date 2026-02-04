@@ -5,7 +5,8 @@ import { AlunoService, IAlunoCompleto } from '@/app/services/alunoService'
 import { ProfessorService } from '@/app/services/professorService'
 import { IProfessor, IAluno, IDefesa } from '@/app/type/index'
 import { X, Save, AlertCircle, GraduationCap, User } from 'lucide-react'
-import { FormInput } from '../ui/FormInput'
+// Importando validações centralizadas
+import { FormInput, INPUT_VALIDATIONS } from '../ui/FormInput'
 import { FormSelect } from '../ui/FormSelect'
 
 interface AlunoFormProps {
@@ -114,14 +115,12 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
         throw new Error('Preencha os campos obrigatórios do Aluno (Nome, Matrícula, E-mail, Orientador).')
       }
 
-      // 2. Validação Regexp (Segurança Extra no Submit)
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(alunoData.email)) {
+      // 2. Validação Regexp (Segurança Extra no Submit usando INPUT_VALIDATIONS)
+      if (!INPUT_VALIDATIONS.email.regex.test(alunoData.email)) {
         throw new Error('O e-mail informado é inválido.')
       }
 
-      const matriculaRegex = /^\d+$/
-      if (!matriculaRegex.test(alunoData.matricula)) {
+      if (!INPUT_VALIDATIONS.numeric.regex.test(alunoData.matricula)) {
         throw new Error('A matrícula deve conter apenas números.')
       }
 
@@ -197,22 +196,19 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
                         onChange={handleAlunoChange} 
                         required 
                     />
-                    {/* Validação: Apenas números */}
+                    {/* Validação: Máscara numérica automática */}
                     <FormInput 
                         label="Matrícula" 
                         name="matricula" 
                         value={alunoData.matricula} 
                         onChange={handleAlunoChange} 
                         required 
-                        validation={{
-                          regex: /^\d+$/,
-                          message: 'A matrícula deve conter apenas números.'
-                        }}
+                        mask="numeric"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Validação: Formato de Email */}
+                    {/* Validação: Formato de Email Centralizado */}
                     <FormInput 
                         label="E-mail" 
                         name="email" 
@@ -220,10 +216,7 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
                         value={alunoData.email} 
                         onChange={handleAlunoChange} 
                         required 
-                        validation={{
-                          regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                          message: 'Insira um e-mail válido.'
-                        }}
+                        validation={INPUT_VALIDATIONS.email}
                     />
                     <FormSelect 
                         label="Orientador"

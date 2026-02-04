@@ -1,6 +1,6 @@
 "use client";
 
-import Toggle from "../../components/settings/toggle";
+import Toggle from "./toggle"; // Verifique se o caminho está correto
 import {
   type Permissions,
   savePermissions,
@@ -26,8 +26,16 @@ export default function PermissionsModal({
     onClose();
   }
 
+  // Proteção contra undefined (Fallback)
+  const safePerms = permissions || {
+    alunoEnviarProrrogacao: false,
+    alunoAgendarDefesa: false,
+    orientadorCriarBanca: false,
+    orientadorEditarNotas: false,
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-[#1F1F1F] border border-[#333333] rounded-xl w-full max-w-lg p-6 text-[#E0E0E0] shadow-xl">
 
         <h2 className="text-xl font-semibold text-[#E6C850] mb-4">
@@ -37,54 +45,42 @@ export default function PermissionsModal({
         <div className="space-y-4">
           <Toggle
             label="Aluno pode enviar prorrogação"
-            checked={permissions.alunoEnviarProrrogacao}
+            checked={safePerms.alunoEnviarProrrogacao}
             onChange={(v) =>
-              setPermissions({
-                ...permissions,
-                alunoEnviarProrrogacao: v,
-              })
+              setPermissions({ ...safePerms, alunoEnviarProrrogacao: v })
             }
           />
 
           <Toggle
             label="Aluno pode agendar defesa"
-            checked={permissions.alunoAgendarDefesa}
+            checked={safePerms.alunoAgendarDefesa}
             onChange={(v) =>
-              setPermissions({
-                ...permissions,
-                alunoAgendarDefesa: v,
-              })
+              setPermissions({ ...safePerms, alunoAgendarDefesa: v })
             }
           />
 
           <Toggle
             label="Orientador pode criar banca"
-            checked={permissions.orientadorCriarBanca}
+            checked={safePerms.orientadorCriarBanca}
             onChange={(v) =>
-              setPermissions({
-                ...permissions,
-                orientadorCriarBanca: v,
-              })
+              setPermissions({ ...safePerms, orientadorCriarBanca: v })
             }
           />
 
           <Toggle
             label="Orientador pode editar notas"
-            checked={permissions.orientadorEditarNotas}
+            checked={safePerms.orientadorEditarNotas}
             onChange={(v) =>
-              setPermissions({
-                ...permissions,
-                orientadorEditarNotas: v,
-              })
+              setPermissions({ ...safePerms, orientadorEditarNotas: v })
             }
           />
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#333]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded bg-[#333] text-white hover:bg-[#444] transition"
+            className="px-4 py-2 rounded border border-[#333] text-[#E0E0E0] hover:bg-[#333] transition"
           >
             Cancelar
           </button>

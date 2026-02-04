@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { ProfessorService } from '@/app/services/professorService'
 import { IProfessor } from '@/app/type/index' 
 import { X, Save, AlertCircle } from 'lucide-react'
-import { FormInput } from '../ui/FormInput'
+// Importando validações e componentes padrão
+import { FormInput, INPUT_VALIDATIONS } from '../ui/FormInput'
 import { FormSelect } from '../ui/FormSelect'
 
 interface ProfessorFormProps {
@@ -61,9 +62,14 @@ export function ProfessorForm({ professorToEdit, onSuccess, onCancel }: Professo
     setError('')
 
     try {
-      // Validação básica
+      // 1. Validação de Campos Obrigatórios
       if (!formData.nome || !formData.email) {
         throw new Error('Nome e E-mail são obrigatórios.')
+      }
+
+      // 2. Validação de Formato (Regex Centralizado)
+      if (!INPUT_VALIDATIONS.email.regex.test(formData.email)) {
+        throw new Error('O e-mail informado é inválido.')
       }
 
       if (professorToEdit?.id) {
@@ -123,6 +129,7 @@ export function ProfessorForm({ professorToEdit, onSuccess, onCancel }: Professo
             value={formData.email} 
             onChange={handleChange} 
             required 
+            validation={INPUT_VALIDATIONS.email}
           />
         </div>
 
