@@ -48,3 +48,22 @@ export interface IAgendamento {
   data: string
   hora: string
 }
+
+export interface ISolicitacao {
+  id: number
+  aluno_nome: string
+  matricula: string
+  email?: string
+  curso: string
+  orientador?: string
+  tipo: 'Qualificação' | 'Defesa'
+  status: 'Aguardando' | 'Aprovada' | 'Rejeitada'
+  data_solicitacao: string // Data que aparece na tabela
+  
+  // Detalhes específicos (podem vir nulos se não houver defesa agendada)
+  detalhes_titulo?: string
+  detalhes_data?: string
+  detalhes_horario?: string
+  detalhes_local?: string
+  detalhes_banca?: string[] // Array de strings com nomes
+}
