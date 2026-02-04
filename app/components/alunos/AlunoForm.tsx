@@ -109,8 +109,9 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
     setError('')
 
     try {
-      if (!alunoData.nome || !alunoData.matricula || !alunoData.orientador_id) {
-        throw new Error('Preencha os campos obrigatórios do Aluno (Nome, Matrícula, Orientador).')
+      // Adicionei validação de Email também para segurança
+      if (!alunoData.nome || !alunoData.matricula || !alunoData.email || !alunoData.orientador_id) {
+        throw new Error('Preencha os campos obrigatórios do Aluno (Nome, Matrícula, E-mail, Orientador).')
       }
 
       const bancaArray = bancaInput.split(',').map(s => s.trim()).filter(s => s !== '')
@@ -119,7 +120,9 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
       if (alunoToEdit?.id) {
         await AlunoService.update(alunoToEdit.id, alunoData, defesaFinal)
       } else {
-        await AlunoService.create(alunoData, defesaFinal)
+        // CORREÇÃO AQUI: Casting 'as IAluno' para satisfazer o TypeScript
+        // Já garantimos no if acima que os campos obrigatórios existem
+        await AlunoService.create(alunoData as IAluno, defesaFinal)
       }
 
       onSuccess()
@@ -263,7 +266,7 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
                     placeholder="Título provisório ou final..."
                 />
                 
-                {/* Textarea customizado (ainda não temos FormTextarea, então estilizei igual aos inputs) */}
+                {/* Textarea customizado */}
                 <div className="w-full mb-4">
                     <label className="block text-sm font-medium text-[#AAAAAA] mb-1.5">Resumo / Abstract</label>
                     <textarea 
