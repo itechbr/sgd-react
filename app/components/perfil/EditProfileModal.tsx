@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { updateProfile } from "../../services/profileService";
 import { Profile } from "@/app/type/perfil";
 
+
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -50,7 +51,7 @@ export default function EditProfileModal({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
-    
+
     try {
       setLoading(true);
       await updateProfile(formData);
@@ -69,7 +70,7 @@ export default function EditProfileModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-lg rounded-xl bg-[#1F1F1F] p-8 border border-[#333333] relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-[#AAAAAA] hover:text-[#C0A040]">✕</button>
-        
+
         <h2 className="mb-6 text-xl font-semibold text-[#E6C850]">Editar Perfil</h2>
 
         {errorMessage && (
@@ -89,46 +90,57 @@ export default function EditProfileModal({
               className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
             />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-1">
-                <label className="text-xs text-[#888] ml-1">Cargo</label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none appearance-none"
-                >
-                  <option value="aluno">Aluno</option>
-                  <option value="professor">Professor</option>
-                  <option value="secretario">Secretário</option>
-                  <option value="coordenador">Coordenador</option>
-                  {/* <option value="admin">Administrador</option> */}
-                </select>
-             </div>
 
-             <div className="space-y-1">
-                <label className="text-xs text-[#888] ml-1">Departamento</label>
-                <input
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  placeholder="Ex: COINF"
-                  className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
-                />
-             </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs text-[#888] ml-1">Cargo</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none appearance-none"
+              >
+                <option value="aluno">Aluno</option>
+                <option value="professor">Professor</option>
+                <option value="secretario">Secretário</option>
+                <option value="coordenador">Coordenador</option>
+                {/* <option value="admin">Administrador</option> */}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-[#888] ml-1">Departamento</label>
+              <input
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                placeholder="Ex: COINF"
+                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs text-[#888] ml-1">Telefone</label>
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="(00) 00000-0000"
-                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
-              />
+              <div className="space-y-1">
+                <label className="text-xs text-[#888] ml-1">Telefone</label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone: onlyNumbers,
+                    }));
+                    setErrorMessage("");
+                  }}
+                  placeholder="Digite seu telefone"
+                  maxLength={15}
+                  className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
+                />
+              </div>
             </div>
 
             {/* NOVO CAMPO ADICIONADO AQUI */}
@@ -145,14 +157,14 @@ export default function EditProfileModal({
           </div>
 
           <div className="space-y-1">
-              <label className="text-xs text-[#888] ml-1">Campus</label>
-              <input
-                name="campus"
-                value={formData.campus}
-                onChange={handleChange}
-                placeholder="Ex: João Pessoa"
-                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
-              />
+            <label className="text-xs text-[#888] ml-1">Campus</label>
+            <input
+              name="campus"
+              value={formData.campus}
+              onChange={handleChange}
+              placeholder="Ex: João Pessoa"
+              className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
+            />
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
