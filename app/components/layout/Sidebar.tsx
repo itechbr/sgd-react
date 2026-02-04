@@ -140,7 +140,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               Sistema
             </li>
             <li>
-              <Link href="/configuracoes" className={getLinkClass('/configuracoes')} onClick={onClose}>
+              <Link href="/settings" className={getLinkClass('/settings')} onClick={onClose}>
                 <Settings className="w-5 h-5 mr-3 opacity-70" />
                 Configurações
               </Link>
