@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { updateProfile } from "../../services/profileService";
 import { Profile } from "@/app/type/perfil";
-
+// Importando os componentes de UI padronizados
+import { FormInput } from "@/app/components/ui/FormInput";
+import { FormSelect } from "@/app/components/ui/FormSelect";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -24,7 +26,7 @@ export default function EditProfileModal({
     phone: "",
     campus: "",
     department: "",
-    registration_id: "" // Novo campo no estado
+    registration_id: ""
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -36,7 +38,7 @@ export default function EditProfileModal({
       phone: profile.phone || "",
       campus: profile.campus || "",
       department: profile.department || "",
-      registration_id: profile.registration_id || "" // Carrega o valor atual
+      registration_id: profile.registration_id || ""
     });
     setErrorMessage("");
   }, [profile, isOpen]);
@@ -79,95 +81,70 @@ export default function EditProfileModal({
           </div>
         )}
 
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs text-[#888] ml-1">Nome Completo</label>
-            <input
+        <form onSubmit={handleSave}>
+          <div className="space-y-4">
+            <FormInput
               name="full_name"
+              label="Nome Completo"
               value={formData.full_name}
               onChange={handleChange}
               placeholder="Nome Completo"
-              className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs text-[#888] ml-1">Cargo</label>
-              <select
+            <div className="grid grid-cols-2 gap-4">
+              <FormSelect
                 name="role"
+                label="Cargo"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none appearance-none"
               >
                 <option value="aluno">Aluno</option>
                 <option value="professor">Professor</option>
                 <option value="secretario">Secretário</option>
                 <option value="coordenador">Coordenador</option>
-                {/* <option value="admin">Administrador</option> */}
-              </select>
-            </div>
+              </FormSelect>
 
-            <div className="space-y-1">
-              <label className="text-xs text-[#888] ml-1">Departamento</label>
-              <input
+              <FormInput
                 name="department"
+                label="Departamento"
                 value={formData.department}
                 onChange={handleChange}
                 placeholder="Ex: COINF"
-                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <div className="space-y-1">
-                <label className="text-xs text-[#888] ml-1">Telefone</label>
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={(e) => {
-                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
-                    setFormData((prev) => ({
-                      ...prev,
-                      phone: onlyNumbers,
-                    }));
-                    setErrorMessage("");
-                  }}
-                  placeholder="Digite seu telefone"
-                  maxLength={15}
-                  className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
-                />
-              </div>
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Telefone com Máscara e Validação Automática */}
+              <FormInput
+                name="phone"
+                label="Telefone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="(XX) XXXXX-XXXX"
+                mask="phone"
+              />
 
-            {/* NOVO CAMPO ADICIONADO AQUI */}
-            <div className="space-y-1">
-              <label className="text-xs text-[#888] ml-1">Matrícula / Registro</label>
-              <input
+              {/* Matrícula bloqueando letras (Apenas números) */}
+              <FormInput
                 name="registration_id"
+                label="Matrícula / Registro"
                 value={formData.registration_id}
                 onChange={handleChange}
                 placeholder="Ex: 20211340"
-                className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
+                mask="numeric"
               />
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-[#888] ml-1">Campus</label>
-            <input
+            <FormInput
               name="campus"
+              label="Campus"
               value={formData.campus}
               onChange={handleChange}
               placeholder="Ex: João Pessoa"
-              className="w-full px-3 py-2 rounded bg-[#2A2A2A] text-white border border-[#444] focus:border-[#C0A040] outline-none"
             />
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 mt-8">
             <button
               type="button"
               onClick={onClose}

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { SecretarioService, ISecretario } from '@/app/services/secretarioService'
 import { X, Save, AlertCircle } from 'lucide-react'
-import { FormInput } from '../ui/FormInput'
+// Importando validações e componentes padrão
+import { FormInput, INPUT_VALIDATIONS } from '../ui/FormInput'
 import { FormSelect } from '../ui/FormSelect'
 
 interface SecretarioFormProps {
@@ -47,8 +48,18 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
     setError('')
 
     try {
+      // 1. Campos Obrigatórios
       if (!formData.nome || !formData.email || !formData.siape) {
         throw new Error('Preencha os campos obrigatórios.')
+      }
+
+      // 2. Validações de Formato (Regex Centralizado)
+      if (!INPUT_VALIDATIONS.email.regex.test(formData.email)) {
+        throw new Error('O e-mail informado é inválido.')
+      }
+
+      if (!INPUT_VALIDATIONS.numeric.regex.test(formData.siape)) {
+        throw new Error('O SIAPE deve conter apenas números.')
       }
 
       if (secretarioToEdit?.id) {
@@ -98,12 +109,15 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
         />
 
         <div className="grid grid-cols-2 gap-4">
+          {/* SIAPE com máscara numérica automática */}
           <FormInput 
             label="SIAPE" 
             name="siape" 
             value={formData.siape} 
             onChange={handleChange} 
             required 
+            mask="numeric"
+            placeholder="Apenas números"
           />
           <FormSelect 
             label="Campus"
@@ -119,6 +133,7 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
           />
         </div>
 
+        {/* E-mail com validação automática */}
         <FormInput 
             label="E-mail Institucional" 
             name="email" 
@@ -126,6 +141,7 @@ export function SecretarioForm({ secretarioToEdit, onSuccess, onCancel }: Secret
             value={formData.email} 
             onChange={handleChange} 
             required 
+            validation={INPUT_VALIDATIONS.email}
         />
 
         <div className="pt-4 border-t border-[#333333] mt-2">
