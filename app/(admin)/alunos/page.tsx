@@ -12,12 +12,8 @@ export default function AlunosPage() {
   const [alunos, setAlunos] = useState<IAlunoCompleto[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
-
-  // Configuração da Paginação
   const ITEMS_PER_PAGE = 8
   const [currentPage, setCurrentPage] = useState(1)
-
-  // Estados dos Modais
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingAluno, setEditingAluno] = useState<IAlunoCompleto | null>(null)
   const [viewAluno, setViewAluno] = useState<IAlunoCompleto | null>(null)
@@ -26,7 +22,6 @@ export default function AlunosPage() {
     carregarAlunos()
   }, [])
 
-  // Reseta para página 1 ao filtrar
   useEffect(() => {
     setCurrentPage(1)
   }, [busca])
@@ -63,8 +58,6 @@ export default function AlunosPage() {
       try {
         await AlunoService.delete(id)
         setAlunos(prev => prev.filter(a => a.id !== id))
-        
-        // Ajusta página se deletar o último item
         const totalItemsAfter = alunos.length - 1
         const maxPages = Math.ceil(totalItemsAfter / ITEMS_PER_PAGE)
         if (currentPage > maxPages && maxPages > 0) setCurrentPage(maxPages)
@@ -148,7 +141,7 @@ export default function AlunosPage() {
     aluno.professores?.nome.toLowerCase().includes(busca.toLowerCase())
   )
 
-  // Lógica de Paginação (Client-Side)
+  // Lógica de Paginação 
   const totalPages = Math.ceil(dadosFiltrados.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedData = dadosFiltrados.slice(startIndex, startIndex + ITEMS_PER_PAGE)

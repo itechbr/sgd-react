@@ -35,7 +35,6 @@ const AgendamentoForm: React.FC<AgendamentoFormProps> = ({
   const [data, setData] = useState('')
   const [horario, setHorario] = useState('')
   const [local, setLocal] = useState('')
-  // Ajuste aqui para evitar erro de tipo com o retorno do serviço
   const [alunosDisponiveis, setAlunosDisponiveis] = useState<Pick<IAluno, 'id' | 'nome' | 'status'>[]>([])
   const [loadingAlunos, setLoadingAlunos] = useState(false)
 

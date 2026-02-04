@@ -5,7 +5,8 @@ const supabase = createClient()
 
 export const SolicitacaoService = {
   // 1. Listar todas as solicitações
-  async getAll() {
+  async getAll(): Promise<ISolicitacao[]> {
+
     const { data, error } = await supabase
       .from('solicitacoes')
       .select('*')
@@ -15,22 +16,24 @@ export const SolicitacaoService = {
         console.error('Erro ao buscar solicitações:', error.message)
         return []
     }
+
     return data as ISolicitacao[]
   },
 
   // 2. Buscar por ID
-  async getById(id: number) {
+  async getById(id: number): Promise<ISolicitacao> {
     const { data, error } = await supabase
       .from('solicitacoes')
-      .select('*')
+      .select('*') // Retornado ao select simples
       .eq('id', id)
       .single()
     
     if (error) throw error
+    
     return data as ISolicitacao
   },
 
-  // 3. Atualizar Status (ex: Aprovar/Rejeitar)
+  // 3. Atualizar Status
   async updateStatus(id: number, status: string) {
     const { data, error } = await supabase
       .from('solicitacoes')

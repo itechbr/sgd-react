@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { DashboardService, DashboardStats, SolicitacaoRecente } from '@/app/services/dashboardService'
 import { DefesasChart, StatusChart } from '@/app/components/dashboard/DashboardCharts'
-import { StatCard } from '@/app/components/dashboard/StatCard' // Novo
-import { StatusBadge } from '@/app/components/ui/StatusBadge' // Novo
-import { UserAvatar } from '@/app/components/ui/UserAvatar' // Novo
-import { ChartCard } from '@/app/components/ui/ChartCard' // Novo
+import { StatCard } from '@/app/components/dashboard/StatCard' 
+import { StatusBadge } from '@/app/components/ui/StatusBadge' 
+import { UserAvatar } from '@/app/components/ui/UserAvatar' 
+import { ChartCard } from '@/app/components/ui/ChartCard' 
 import Link from 'next/link'
 import { Users, CalendarClock, FileText, GraduationCap } from 'lucide-react'
 

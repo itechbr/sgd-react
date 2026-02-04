@@ -23,16 +23,14 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       }
     }
     getUser()
-  }, []) // Executa apenas uma vez na montagem
+  }, []) 
 
-  // Lógica de extração de nome (migrada do header.js antigo)
   const extractNames = (email: string) => {
     const namePart = email.split('@')[0]
     const firstName = namePart.split('.')[0]
     return firstName.charAt(0).toUpperCase() + firstName.slice(1)
   }
 
-  // URL do Avatar gerado automaticamente (mesma lógica do legado)
   const avatarUrl = `https://ui-avatars.com/api/?name=${userName}&background=C0A040&color=1F1F1F&bold=true`
 
   return (

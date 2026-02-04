@@ -5,7 +5,6 @@ import { AlunoService, IAlunoCompleto } from '@/app/services/alunoService'
 import { ProfessorService } from '@/app/services/professorService'
 import { IProfessor, IAluno, IDefesa } from '@/app/type/index'
 import { X, Save, AlertCircle, GraduationCap, User } from 'lucide-react'
-// Importando validações centralizadas
 import { FormInput, INPUT_VALIDATIONS } from '../ui/FormInput'
 import { FormSelect } from '../ui/FormSelect'
 
@@ -68,8 +67,7 @@ export function AlunoForm({ alunoToEdit, onSuccess, onCancel }: AlunoFormProps) 
           })
 
           if (alunoToEdit.defesas) {
-            setDefesaData({
-                // @ts-ignore
+            setDefesaData({  
                 titulo: alunoToEdit.defesas.titulo || '',
                 local: alunoToEdit.defesas.local || '',
                 data: alunoToEdit.defesas.data || '',

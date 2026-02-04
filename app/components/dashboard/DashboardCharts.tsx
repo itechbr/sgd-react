@@ -38,7 +38,7 @@ export function DefesasChart({ data, labels }: DefesasChartProps) {
       ctx.clearRect(0, 0, width, height)
 
       // Configs
-      const maxValue = Math.max(...data, 10) // Mínimo 10 para escala
+      const maxValue = Math.max(...data, 10) 
       const barWidth = chartWidth / (data.length * 2)
       
       // Eixos e Grades
@@ -76,7 +76,7 @@ export function DefesasChart({ data, labels }: DefesasChartProps) {
         const barHeight = (value / maxValue) * chartHeight
         const y = height - padding - barHeight
         
-        ctx.fillStyle = '#C0A040' // Dourado SGD
+        ctx.fillStyle = '#C0A040' 
         // Centraliza a barra no ponto X
         ctx.fillRect(x - barWidth/2, y, barWidth, barHeight)
       })
@@ -91,7 +91,6 @@ export function DefesasChart({ data, labels }: DefesasChartProps) {
 
   return <canvas ref={canvasRef} className="w-full h-full" />
 }
-
 // --- GRÁFICO 2: STATUS ALUNOS (DONUT) ---
 interface StatusChartProps {
   data: number[]
@@ -122,14 +121,13 @@ export function StatusChart({ data, labels, colors }: StatusChartProps) {
       const height = canvas.height
       const centerX = width / 2
       const centerY = height / 2
-      // Raio baseado no menor lado para caber
       const radius = Math.min(width, height) / 2 - 10
-      const cutoutRadius = radius * 0.7 // Buraco do donut
+      const cutoutRadius = radius * 0.7 
 
       ctx.clearRect(0, 0, width, height)
 
       const total = data.reduce((acc, val) => acc + val, 0)
-      let startAngle = -0.5 * Math.PI // Começa do topo (12h)
+      let startAngle = -0.5 * Math.PI 
 
       data.forEach((value, i) => {
         const sliceAngle = (value / total) * 2 * Math.PI
@@ -145,11 +143,10 @@ export function StatusChart({ data, labels, colors }: StatusChartProps) {
 
         startAngle = endAngle
       })
-
       // Círculo central (para fazer virar Donut)
       ctx.beginPath()
       ctx.arc(centerX, centerY, cutoutRadius, 0, 2 * Math.PI)
-      ctx.fillStyle = '#1F1F1F' // Cor de fundo do card
+      ctx.fillStyle = '#1F1F1F' 
       ctx.fill()
     }
 

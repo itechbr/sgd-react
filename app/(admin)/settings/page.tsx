@@ -20,7 +20,6 @@ import {
   type Permissions,
 } from "../../services/permissionsService";
 
-// Componente visual extraído e melhorado
 function SettingsCard({
   title,
   description,
@@ -57,20 +56,17 @@ function SettingsCard({
 export default function ConfiguracoesPage() {
   const { notify } = useNotification();
   const [loading, setLoading] = useState(true);
-  
-  // Inicializa com DEFAULT para evitar undefined no primeiro render
+
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [permissions, setPermissions] = useState<Permissions>(DEFAULT_PERMISSIONS);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [permissionsOpen, setPermissionsOpen] = useState(false);
 
-  // Carregamento inicial
   useEffect(() => {
     try {
       const s = loadSettings();
       const p = loadPermissions();
-      // Garante que não venha nulo
       setSettings(s || DEFAULT_SETTINGS);
       setPermissions(p || DEFAULT_PERMISSIONS);
     } catch (e) {
@@ -82,11 +78,8 @@ export default function ConfiguracoesPage() {
 
   function salvarConfiguracoes() {
     setLoading(true);
-    // Simula um delay de salvamento para feedback visual
     setTimeout(() => {
-      saveSettings(settings);
-      // Salvar permissões também se necessário: savePermissions(permissions);
-      
+      saveSettings(settings);     
       notify("Configurações salvas com sucesso!", "success");
       setLoading(false);
     }, 600);

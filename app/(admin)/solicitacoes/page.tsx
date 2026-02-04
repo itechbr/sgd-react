@@ -12,7 +12,7 @@ export default function SolicitacoesPage() {
   const [solicitacoes, setSolicitacoes] = useState<ISolicitacao[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Filtros (Baseado no solicitacoes.js)
+  // Filtros
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
   const [filtroData, setFiltroData] = useState('')
@@ -72,7 +72,7 @@ export default function SolicitacoesPage() {
     },
     { 
         header: 'Tipo', 
-        accessor: 'tipo' // Ex: Qualificação ou Defesa
+        accessor: 'tipo' 
     },
     { 
       header: 'Data Solicitação', 
@@ -103,18 +103,14 @@ export default function SolicitacoesPage() {
     }
   ]
 
-  // --- Lógica de Filtros (Igual ao JS original) ---
+  // --- Lógica de Filtros ---
   const dadosFiltrados = solicitacoes.filter(s => {
-    // Filtro por Nome ou Matrícula
     const matchBusca = 
       s.aluno_nome.toLowerCase().includes(busca.toLowerCase()) ||
       s.matricula.includes(busca)
     
-    // Filtro por Status
     const matchStatus = filtroStatus === '' || s.status.toLowerCase() === filtroStatus.toLowerCase()
     
-    // Filtro por Data (se selecionada)
-    // Atenção: compara string de data YYYY-MM-DD
     const matchData = filtroData === '' || s.data_solicitacao.startsWith(filtroData)
 
     return matchBusca && matchStatus && matchData
@@ -128,13 +124,14 @@ export default function SolicitacoesPage() {
   return (
     <div className="space-y-6 relative">
       
-      {/* Modal Detalhes */}
+      {/* Modal Detalhes Conectado */}
       {viewSolicitacao && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-2xl my-auto">
             <SolicitacaoDetails 
               solicitacao={viewSolicitacao}
               onClose={() => setViewSolicitacao(null)}
+              onUpdate={carregarSolicitacoes} // <--- AQUI ESTÁ A MÁGICA
             />
           </div>
         </div>
@@ -146,7 +143,7 @@ export default function SolicitacoesPage() {
         <p className="text-[#AAAAAA] text-sm mt-1">Gerencie as solicitações de defesa e qualificação.</p>
       </div>
 
-      {/* Barra de Filtros (Estilo Card) */}
+      {/* Barra de Filtros */}
       <div className="bg-[#1F1F1F] p-5 rounded-xl border border-[#333333] shadow-lg">
         <h3 className="text-[#C0A040] font-semibold mb-4 text-sm uppercase tracking-wide">Filtrar Solicitações</h3>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">

@@ -5,7 +5,6 @@ import { useNotification } from "@/app/providers";
 import BancaMember from "./BancaMember";
 import SuccessModal from "./SuccessModal";
 import DocumentoTemplate from "./DocumentoTemplate"; 
-// IMPORTANTE: Importamos as validações centralizadas aqui
 import { FormInput, INPUT_VALIDATIONS } from "@/app/components/ui/FormInput";
 import { ArrowRight, ArrowLeft, FileText, CheckCircle, ClipboardCheck, Calendar, Download } from "lucide-react";
 
@@ -49,7 +48,6 @@ export default function DocumentosForm() {
         return;
     }
 
-    // Telefone (se informado) deve seguir o padrão (XX) XXXXX-XXXX
     if (rawData.telefone && !INPUT_VALIDATIONS.phone.regex.test(rawData.telefone as string)) {
         notify("Candidato: O telefone é inválido.", "error");
         setActiveTab("candidato");
@@ -59,11 +57,11 @@ export default function DocumentosForm() {
     // --- 2. VALIDAÇÃO DA BANCA ---
     for (const idx of membros) {
         const nome = rawData[`membro_${idx}_nome`];
-        const cpf = rawData[`membro_${idx}_cpf`] as string; // Isso virá limpo ou formatado dependendo da máscara
+        const cpf = rawData[`membro_${idx}_cpf`] as string; 
         const email = rawData[`membro_${idx}_email`] as string;
 
         if (nome) {
-             // Validamos se é numérico (pois definimos mask="numeric" no BancaMember para aceitar Matrícula ou CPF puro)
+             
              if (cpf && !INPUT_VALIDATIONS.numeric.regex.test(cpf.replace(/\D/g, ''))) {
                 notify(`Membro ${idx + 1} (${nome}): Matrícula/CPF inválido.`, "error");
                 setActiveTab("banca");

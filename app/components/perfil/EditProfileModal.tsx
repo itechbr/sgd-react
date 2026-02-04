@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { updateProfile } from "../../services/profileService";
 import { Profile } from "@/app/type/perfil";
-// Importando os componentes de UI padronizados
 import { FormInput } from "@/app/components/ui/FormInput";
 import { FormSelect } from "@/app/components/ui/FormSelect";
 

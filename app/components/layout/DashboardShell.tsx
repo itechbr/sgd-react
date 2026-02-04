@@ -9,7 +9,6 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children }: DashboardShellProps) {
-  // Estado para controlar a visibilidade da Sidebar no Mobile
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { ProfessorService } from '@/app/services/professorService'
 import { IProfessor } from '@/app/type/index' 
 import { X, Save, AlertCircle } from 'lucide-react'
-// Importando validações e componentes padrão
 import { FormInput, INPUT_VALIDATIONS } from '../ui/FormInput'
 import { FormSelect } from '../ui/FormSelect'
 

@@ -46,7 +46,6 @@ export default function LoginPage() {
       })
 
       if (authError) {
-        // Se o e-mail existe mas a senha errou, ou o Supabase barrou
         setError('E-mail ou senha incorretos.')
         setIsLoading(false)
         return

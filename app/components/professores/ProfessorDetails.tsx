@@ -10,7 +10,7 @@ interface ProfessorDetailsProps {
 
 export function ProfessorDetails({ professor, onClose }: ProfessorDetailsProps) {
   
-  // Função auxiliar para estilo da categoria (igual à listagem)
+  // Função auxiliar para estilo da categoria 
   const getCategoriaStyle = (tipo: string) => {
     switch(tipo) {
       case 'Permanente': return 'bg-[#C0A040]/20 text-[#C0A040] border-[#C0A040]/50'
