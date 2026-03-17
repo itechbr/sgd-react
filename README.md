@@ -50,8 +50,9 @@ Gerenciador de pacotes (NPM, Yarn ou PNPM)
 
 Conta no Supabase configurada com o banco de dados do projeto.
 
-#Passo a passo
-#Clone o repositório:
+# Passo a passo
+# Clone o repositório:
+
 git clone [https://github.com/SEU_USUARIO/sgd-react.git](https://github.com/SEU_USUARIO/sgd-react.git)
 cd sgd-react
 
